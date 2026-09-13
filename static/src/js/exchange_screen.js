@@ -38,13 +38,22 @@ export class ExchangeScreen extends TicketScreen {
         });
         if (confirmed && payload?.orderline) {
             const orderline = payload.orderline;
+            const order = this.pos.get_order() || this.pos.add_new_order();
+            const returnLine = await order.add_product(orderline.product, {
+                quantity: -orderline.get_quantity(),
+                price: orderline.get_unit_price(),
+                merge: false,
+            });
+            returnLine.is_exchange_return = true;
             this.pos.exchangeState = {
-                order: clickedOrder,
-                orderline,
+                sourceOrder: orderline.order,
+                sourceOrderName: orderline.order.name,
+                sourceOrderline: orderline,
                 product: orderline.product,
                 quantity: orderline.get_quantity(),
-                price: orderline.get_unit_display_price(),
-                lineTotal: orderline.get_display_price(),
+                price: orderline.get_unit_price(),
+                returnLine,
+                exchangeOrder: order,
                 waitingForReplacement: true,
                 replacementProduct: null,
             };

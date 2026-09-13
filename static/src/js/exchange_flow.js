@@ -16,7 +16,6 @@ patch(PosStore.prototype, {
                 replacementProduct: product,
                 waitingForReplacement: false,
             });
-            return Promise.resolve();
         }
         return super.addProductToCurrentOrder(product, options);
     },

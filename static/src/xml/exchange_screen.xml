@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
 
+    <t t-name="kio_pos_product_exchange.TicketScreen" t-inherit="point_of_sale.TicketScreen" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('leftpane')]" position="attributes">
+            <attribute name="t-att-class">{ 'd-none': exchangeMode }</attribute>
+        </xpath>
+    </t>
+
     <t t-name="kio_pos_product_exchange.ExchangeDetailsPopup">
         <div class="popup exchange-details-popup">
             <div class="modal-header">

@@ -31,6 +31,7 @@ Key Features:
         'point_of_sale._assets_pos': [
             'kio_pos_product_exchange/static/src/xml/*.xml',
             'kio_pos_product_exchange/static/src/js/exchange_button.js',
+            'kio_pos_product_exchange/static/src/js/exchange_screen.js',
         ],
     },
     'installable': True,

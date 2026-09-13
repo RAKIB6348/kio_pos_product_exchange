@@ -1,0 +1,45 @@
+# Python cache / bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Odoo
+*.log
+*.pot
+*.po~
+filestore/
+sessions/
+
+# Virtual envs
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# AI agents / helpers - never push
+.codex/
+.opencode/
+.openai/
+.claude/
+.cursor/
+.aider*
+.chat-history/
+*.ai.json
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+*.key
+*.pem

@@ -80,26 +80,6 @@
     </t>
 
     <t t-name="kio_pos_product_exchange.ProductScreen" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
-        <xpath expr="//div[hasclass('rightpane')]" position="inside">
-            <div t-if="pos.exchangeState?.waitingForReplacement"
-                class="exchange-replacement-banner d-flex align-items-center justify-content-between px-3 py-2 text-white">
-                <span>
-                    Exchange old product
-                    <b t-esc="pos.exchangeState.product ? pos.exchangeState.product.display_name : ''" />
-                    — tap a new product
-                </span>
-                <button class="btn btn-sm btn-light" t-on-click="() => this.pos.clearExchangeState()">Cancel</button>
-            </div>
-            <div t-elif="pos.exchangeState?.replacementProduct"
-                class="exchange-replacement-banner exchange-replacement-banner--done d-flex align-items-center justify-content-between px-3 py-2 text-white">
-                <span>
-                    Replacement captured:
-                    <b t-esc="pos.exchangeState.replacementProduct.display_name" />
-                    (old: <t t-esc="pos.exchangeState.product.display_name" />)
-                </span>
-                <button class="btn btn-sm btn-light" t-on-click="() => this.pos.clearExchangeState()">Clear</button>
-            </div>
-        </xpath>
     </t>
 
 </templates>

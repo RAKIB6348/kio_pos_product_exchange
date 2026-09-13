@@ -47,7 +47,7 @@
                                 'selected': isLineSelected(line),
                                 'ineligible': !canSelectLine(line)
                             }"
-                            t-on-click="() => onLineClick(line)">
+                            t-on-click="() => this.onLineClick(line)">
                             <i t-attf-class="fa {{ isLineSelected(line) ? 'fa-check-square-o' : 'fa-square-o' }}"/>
                             <span class="exchange-col-product" t-esc="line.getDisplayData().productName" />
                             <span class="exchange-col-qty">Qty: <t t-esc="line.getDisplayData().qty" /></span>
@@ -88,7 +88,7 @@
                     <b t-esc="pos.exchangeState.product ? pos.exchangeState.product.display_name : ''" />
                     — tap a new product
                 </span>
-                <button class="btn btn-sm btn-light" t-on-click="() => pos.clearExchangeState()">Cancel</button>
+                <button class="btn btn-sm btn-light" t-on-click="() => this.pos.clearExchangeState()">Cancel</button>
             </div>
             <div t-elif="pos.exchangeState?.replacementProduct"
                 class="exchange-replacement-banner exchange-replacement-banner--done d-flex align-items-center justify-content-between px-3 py-2 text-white">
@@ -97,7 +97,7 @@
                     <b t-esc="pos.exchangeState.replacementProduct.display_name" />
                     (old: <t t-esc="pos.exchangeState.product.display_name" />)
                 </span>
-                <button class="btn btn-sm btn-light" t-on-click="() => pos.clearExchangeState()">Clear</button>
+                <button class="btn btn-sm btn-light" t-on-click="() => this.pos.clearExchangeState()">Clear</button>
             </div>
         </xpath>
     </t>

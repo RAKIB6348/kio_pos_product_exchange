@@ -1,34 +1,39 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "kio_pos_product_exchange",
-
-    'summary': "Short (1 phrase/line) summary of the module's purpose",
-
+    'name': "POS Product Exchange",
+    'summary': "Exchange products from Point of Sale orders",
     'description': """
-Long description of module's purpose
+POS Product Exchange
+====================
+Allow cashiers to exchange products from validated POS orders.
+
+Key Features:
+-------------
+* Exchange sold product with another product
+* Price difference handling (pay extra / refund)
+* Stock and order history tracking
+* Simple workflow from POS interface
     """,
-
-    'author': "My Company",
-    'website': "https://www.yourcompany.com",
-
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
-    'category': 'Uncategorized',
-    'version': '0.1',
-
-    # any module necessary for this one to work correctly
-    'depends': ['base'],
-
-    # always loaded
+    'author': "Md Rakib Hasan",
+    'website': "https://github.com/RAKIB6348/kio_pos_product_exchange",
+    'category': 'Point of Sale',
+    'version': '17.0.1.0.0',
+    'license': 'LGPL-3',
+    'depends': ['point_of_sale'],
     'data': [
-        # 'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'views/views.xml',
-        'views/templates.xml',
     ],
-    # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
     ],
+    'assets': {
+        # 'point_of_sale._assets_pos': [
+        #     'kio_pos_product_exchange/static/src/js/*.js',
+        #     'kio_pos_product_exchange/static/src/xml/*.xml',
+        # ],
+    },
+    'installable': True,
+    'application': False,
+    'auto_install': False,
 }
-

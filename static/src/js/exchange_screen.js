@@ -45,6 +45,10 @@ export class ExchangeScreen extends TicketScreen {
                 merge: false,
             });
             returnLine.is_exchange_return = true;
+            const originalPartner = orderline.order.get_partner();
+            if (originalPartner) {
+                order.set_partner(originalPartner);
+            }
             this.pos.exchangeState = {
                 sourceOrder: orderline.order,
                 sourceOrderName: orderline.order.name,
@@ -52,6 +56,7 @@ export class ExchangeScreen extends TicketScreen {
                 product: orderline.product,
                 quantity: orderline.get_quantity(),
                 price: orderline.get_unit_price(),
+                partner: originalPartner,
                 returnLine,
                 exchangeOrder: order,
                 waitingForReplacement: true,

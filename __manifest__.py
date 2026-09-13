@@ -20,13 +20,8 @@ Key Features:
     'version': '17.0.1.0.0',
     'license': 'LGPL-3',
     'depends': ['point_of_sale'],
-    'data': [
-        # 'security/ir.model.access.csv',
-        'views/views.xml',
-    ],
-    'demo': [
-        'demo/demo.xml',
-    ],
+    'data': [],
+    'demo': [],
     'assets': {
         'point_of_sale._assets_pos': [
             'kio_pos_product_exchange/static/src/xml/*.xml',

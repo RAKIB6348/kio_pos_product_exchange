@@ -89,8 +89,18 @@
         }
     }
 
+    .exchange-confirmation-note {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: #e7f3ff;
+        border: 1px solid #017e84;
+        border-radius: 3px;
+        color: #017e84;
+    }
+
     .modal-footer {
-        .button.confirm.disabled {
+        .button.disabled {
             pointer-events: none;
             opacity: 0.5;
         }

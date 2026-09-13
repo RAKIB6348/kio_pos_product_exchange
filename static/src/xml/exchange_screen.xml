@@ -50,12 +50,24 @@
                     </t>
                 </div>
             </main>
+            <div t-if="state.confirmed and selectedLine" class="exchange-confirmation-note">
+                <i class="fa fa-check me-1" />
+                Old product confirmed:
+                <b t-esc="selectedLine.getDisplayData().productName" />
+            </div>
             <div class="footer modal-footer">
-                <div class="button cancel btn btn-lg btn-secondary me-2" t-on-click="cancel">
-                    <t t-esc="props.cancelText" />
+                <div t-att-class="{ 'disabled': !selectedLine }"
+                    class="button select-confirm btn btn-lg btn-primary me-2"
+                    t-on-click="onConfirmSelection">
+                    <t t-esc="props.confirmSelectionText" />
                 </div>
-                <div class="button confirm btn btn-lg btn-primary" t-on-click="onClickConfirm">
+                <div t-att-class="{ 'disabled': !selectedLine }"
+                    class="button select-replacement btn btn-lg btn-outline-primary me-2"
+                    t-on-click="onSelectReplacement">
                     <t t-esc="props.confirmText" />
+                </div>
+                <div class="button cancel btn btn-lg btn-danger" t-on-click="cancel">
+                    <t t-esc="props.cancelText" />
                 </div>
             </div>
         </div>

@@ -8,7 +8,8 @@ import { _t } from "@web/core/l10n/translation";
 export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
     static template = "kio_pos_product_exchange.ExchangeDetailsPopup";
     static defaultProps = {
-        confirmText: _t("Choose New Product"),
+        confirmText: _t("Select Replacement Product"),
+        confirmSelectionText: _t("Confirm"),
         cancelText: _t("Cancel"),
         title: _t("Order Details"),
         cancelKey: "Escape",
@@ -18,7 +19,7 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
     setup() {
         super.setup();
         this.pos = usePos();
-        this.state = useState({ selectedLineId: null });
+        this.state = useState({ selectedLineId: null, confirmed: false });
     }
 
     get orderlines() {
@@ -42,11 +43,18 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
             return;
         }
         this.state.selectedLineId = this.state.selectedLineId === line.id ? null : line.id;
+        this.state.confirmed = false;
     }
 
-    onClickConfirm() {
+    onSelectReplacement() {
         if (this.selectedLine) {
             this.confirm();
+        }
+    }
+
+    onConfirmSelection() {
+        if (this.selectedLine) {
+            this.state.confirmed = true;
         }
     }
 

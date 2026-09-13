@@ -21,17 +21,17 @@ Key Features:
     'license': 'LGPL-3',
     'depends': ['point_of_sale'],
     'data': [
-        'security/ir.model.access.csv',
+        # 'security/ir.model.access.csv',
         'views/views.xml',
     ],
     'demo': [
         'demo/demo.xml',
     ],
     'assets': {
-        # 'point_of_sale._assets_pos': [
-        #     'kio_pos_product_exchange/static/src/js/*.js',
-        #     'kio_pos_product_exchange/static/src/xml/*.xml',
-        # ],
+        'point_of_sale._assets_pos': [
+            'kio_pos_product_exchange/static/src/xml/*.xml',
+            'kio_pos_product_exchange/static/src/js/exchange_button.js',
+        ],
     },
     'installable': True,
     'application': False,

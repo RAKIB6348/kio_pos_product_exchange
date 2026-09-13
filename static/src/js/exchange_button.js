@@ -12,6 +12,7 @@ export class ExchangeButton extends Component {
     }
 
     click() {
+        this.pos.exchangeState = null;
         this.pos.showScreen("ExchangeScreen", {
             ui: { filter: "SYNCED", searchDetails: this.pos.getDefaultSearchDetails() },
             destinationOrder: this.pos.get_order(),

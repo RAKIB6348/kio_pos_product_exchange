@@ -4,6 +4,8 @@ import { TicketScreen } from "@point_of_sale/app/screens/ticket_screen/ticket_sc
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 import { registry } from "@web/core/registry";
 import { _t } from "@web/core/l10n/translation";
+import { onWillUnmount } from "@odoo/owl";
+import { ExchangeDetailsPopup } from "./exchange_details_popup";
 
 export class ExchangeScreen extends TicketScreen {
     static template = "point_of_sale.TicketScreen";
@@ -13,6 +15,41 @@ export class ExchangeScreen extends TicketScreen {
     setup() {
         super.setup();
         this.exchangeMode = true;
+        onWillUnmount(() => {
+            if (!this.pos.exchangeState?.waitingForReplacement) {
+                this.pos.exchangeState = null;
+            }
+        });
+    }
+
+    isLineEligibleForExchange(line) {
+        const remaining = line.get_quantity() - (line.refunded_qty || 0);
+        return !this.pos.isProductQtyZero(remaining);
+    }
+
+    async onClickOrder(clickedOrder) {
+        const { confirmed, payload } = await this.popup.add(ExchangeDetailsPopup, {
+            order: clickedOrder,
+            partner: this.getPartner(clickedOrder),
+            cashier: this.getCashier(clickedOrder),
+            date: this.getDate(clickedOrder),
+            total: this.getTotal(clickedOrder),
+            canExchangeLine: (line) => this.isLineEligibleForExchange(line),
+        });
+        if (confirmed && payload?.orderline) {
+            const orderline = payload.orderline;
+            this.pos.exchangeState = {
+                order: clickedOrder,
+                orderline,
+                product: orderline.product,
+                quantity: orderline.get_quantity(),
+                price: orderline.get_unit_display_price(),
+                lineTotal: orderline.get_display_price(),
+                waitingForReplacement: true,
+                replacementProduct: null,
+            };
+            this.pos.showScreen("ProductScreen");
+        }
     }
 
     async onDoRefund() {

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="kio_pos_product_exchange.ExchangeDetailsPopup">
+        <div class="popup exchange-details-popup">
+            <div class="modal-header">
+                <h4 class="modal-title title">
+                    <t t-esc="props.title" />
+                </h4>
+                <button class="btn btn-light btn-lg rounded-3 popup-close" t-on-click="cancel">
+                    <i class="fa fa-close" />
+                </button>
+            </div>
+            <main class="modal-body exchange-details-body">
+                <div class="exchange-meta-row">
+                    <span class="exchange-meta-label">Receipt</span>
+                    <span class="exchange-meta-value" t-esc="props.order.name" />
+                </div>
+                <div class="exchange-meta-row">
+                    <span class="exchange-meta-label">Customer</span>
+                    <span class="exchange-meta-value" t-esc="props.partner" />
+                </div>
+                <div class="exchange-meta-row">
+                    <span class="exchange-meta-label">Cashier</span>
+                    <span class="exchange-meta-value" t-esc="props.cashier" />
+                </div>
+                <div class="exchange-meta-row">
+                    <span class="exchange-meta-label">Date</span>
+                    <span class="exchange-meta-value" t-esc="props.date" />
+                </div>
+                <div class="exchange-meta-row">
+                    <span class="exchange-meta-label">Total</span>
+                    <span class="exchange-meta-value" t-esc="props.total" />
+                </div>
+
+                <div class="exchange-products-title fw-bolder">Products</div>
+                <div class="exchange-product-list">
+                    <t t-foreach="orderlines" t-as="line" t-key="line.id">
+                        <div class="exchange-product-row"
+                            t-att-class="{
+                                'selected': isLineSelected(line),
+                                'ineligible': !canSelectLine(line)
+                            }"
+                            t-on-click="() => onLineClick(line)">
+                            <i t-attf-class="fa {{ isLineSelected(line) ? 'fa-check-square-o' : 'fa-square-o' }}"/>
+                            <span class="exchange-col-product" t-esc="line.getDisplayData().productName" />
+                            <span class="exchange-col-qty">Qty: <t t-esc="line.getDisplayData().qty" /></span>
+                            <span class="exchange-col-price" t-esc="line.getDisplayData().price" />
+                        </div>
+                    </t>
+                </div>
+            </main>
+            <div class="footer modal-footer">
+                <div class="button cancel btn btn-lg btn-secondary me-2" t-on-click="cancel">
+                    <t t-esc="props.cancelText" />
+                </div>
+                <div class="button confirm btn btn-lg btn-primary" t-on-click="onClickConfirm">
+                    <t t-esc="props.confirmText" />
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="kio_pos_product_exchange.ProductScreen" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('rightpane')]" position="inside">
+            <div t-if="pos.exchangeState?.waitingForReplacement"
+                class="exchange-replacement-banner d-flex align-items-center justify-content-between px-3 py-2 text-white">
+                <span>
+                    Exchange old product
+                    <b t-esc="pos.exchangeState.product ? pos.exchangeState.product.display_name : ''" />
+                    — tap a new product
+                </span>
+                <button class="btn btn-sm btn-light" t-on-click="() => pos.clearExchangeState()">Cancel</button>
+            </div>
+            <div t-elif="pos.exchangeState?.replacementProduct"
+                class="exchange-replacement-banner exchange-replacement-banner--done d-flex align-items-center justify-content-between px-3 py-2 text-white">
+                <span>
+                    Replacement captured:
+                    <b t-esc="pos.exchangeState.replacementProduct.display_name" />
+                    (old: <t t-esc="pos.exchangeState.product.display_name" />)
+                </span>
+                <button class="btn btn-sm btn-light" t-on-click="() => pos.clearExchangeState()">Clear</button>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

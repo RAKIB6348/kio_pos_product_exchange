@@ -1,0 +1,107 @@
+.exchange-details-popup {
+    width: 480px;
+    max-width: 90vw;
+
+    .modal-header {
+        .popup-close {
+            margin-left: auto;
+        }
+    }
+
+    .exchange-details-body {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .exchange-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+
+        .exchange-meta-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .exchange-meta-value {
+            font-weight: 600;
+        }
+    }
+
+    .exchange-products-title {
+        border-top: 1px solid #dee2e6;
+        margin-top: 8px;
+        padding: 10px 0 4px;
+    }
+
+    .exchange-product-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .exchange-product-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 6px;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+            border-radius: 3px;
+
+            &:hover {
+                background: #f8f9fa;
+            }
+
+            &.selected {
+                background: #e7f3ff;
+                border-color: #017e84;
+            }
+
+            &.ineligible {
+                opacity: 0.45;
+                pointer-events: none;
+            }
+
+            .fa {
+                flex: 0 0 20px;
+                color: #017e84;
+            }
+
+            .exchange-col-product {
+                flex: 1 1 auto;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .exchange-col-qty {
+                flex: 0 0 60px;
+                text-align: right;
+                color: #6c757d;
+            }
+
+            .exchange-col-price {
+                flex: 0 0 90px;
+                text-align: right;
+                font-weight: 600;
+            }
+        }
+    }
+
+    .modal-footer {
+        .button.confirm.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+    }
+}
+
+.exchange-replacement-banner {
+    background: #017e84;
+    flex-shrink: 0;
+}
+
+.exchange-replacement-banner--done {
+    background: #28a745;
+}

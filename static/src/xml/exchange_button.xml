@@ -2,7 +2,7 @@
 <templates id="template" xml:space="preserve">
 
     <t t-name="kio_pos_product_exchange.ExchangeButton">
-        <button class="control-button btn btn-light rounded-0 fw-bolder" t-on-click="() => this.click()">
+        <button class="control-button btn btn-light rounded-0 fw-bolder exchange-button" t-on-click="() => this.click()">
             <i class="fa fa-exchange me-1" role="img" aria-label="Exchange" title="Exchange" />
             Exchange
         </button>

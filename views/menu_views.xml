@@ -79,15 +79,49 @@
         <field name="model">pos.exchange.record</field>
         <field name="arch" type="xml">
             <search string="Exchange Records">
+
                 <field name="name"/>
                 <field name="source_order_id"/>
                 <field name="exchange_order_id"/>
                 <field name="customer_id"/>
+                <field name="config_id"/>
                 <field name="cashier_id"/>
                 <field name="state"/>
-                <filter name="completed" string="Completed" domain="[('state', '=', 'completed')]"/>
-                <filter name="refunded" string="Refunded" domain="[('state', '=', 'refunded')]"/>
-                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+
+                <separator/>
+
+                <filter name="completed"
+                        string="Completed"
+                        domain="[('state', '=', 'completed')]"/>
+
+                <filter name="refunded"
+                        string="Refunded"
+                        domain="[('state', '=', 'refunded')]"/>
+
+                <filter name="cancelled"
+                        string="Cancelled"
+                        domain="[('state', '=', 'cancelled')]"/>
+
+                <separator/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_by_shop"
+                            string="Shop"
+                            context="{'group_by': 'config_id'}"/>
+
+                    <filter name="group_by_customer"
+                            string="Customer"
+                            context="{'group_by': 'customer_id'}"/>
+
+                    <filter name="group_by_cashier"
+                            string="Cashier"
+                            context="{'group_by': 'cashier_id'}"/>
+
+                    <filter name="group_by_state"
+                            string="Status"
+                            context="{'group_by': 'state'}"/>
+                </group>
+
             </search>
         </field>
     </record>

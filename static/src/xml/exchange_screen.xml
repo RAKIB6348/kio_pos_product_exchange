@@ -62,11 +62,11 @@
                 <b t-esc="selectedLine.getDisplayData().productName" />
             </div>
             <div class="footer modal-footer">
-                <div t-att-class="{ 'disabled': !selectedLine }"
+                <!-- <div t-att-class="{ 'disabled': !selectedLine }"
                     class="button select-confirm btn btn-lg btn-primary me-2"
                     t-on-click="onConfirmSelection">
                     <t t-esc="props.confirmSelectionText" />
-                </div>
+                </div> -->
                 <div t-att-class="{ 'disabled': !selectedLine }"
                     class="button select-replacement btn btn-lg btn-primary me-2"
                     t-on-click="onSelectReplacement">

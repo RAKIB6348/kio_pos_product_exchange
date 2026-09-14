@@ -21,6 +21,8 @@ Key Features:
     'license': 'LGPL-3',
     'depends': ['point_of_sale'],
     'data': [
+        'security/ir.model.access.csv',
+        'data/pos_exchange_sequence.xml',
         'views/menu_views.xml',
     ],
     'demo': [],
@@ -31,6 +33,7 @@ Key Features:
             'kio_pos_product_exchange/static/src/js/exchange_screen.js',
             'kio_pos_product_exchange/static/src/js/exchange_details_popup.js',
             'kio_pos_product_exchange/static/src/js/exchange_flow.js',
+            'kio_pos_product_exchange/static/src/js/exchange_order.js',
             'kio_pos_product_exchange/static/src/scss/exchange_screen.scss',
         ],
     },

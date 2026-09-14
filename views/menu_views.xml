@@ -1,8 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_pos_exchange_record_tree" model="ir.ui.view">
+        <field name="name">pos.exchange.record.tree</field>
+        <field name="model">pos.exchange.record</field>
+        <field name="arch" type="xml">
+            <tree string="Exchange Records" create="0" edit="0" delete="0">
+                <field name="name"/>
+                <field name="source_order_id"/>
+                <field name="exchange_order_id"/>
+                <field name="customer_id"/>
+                <field name="old_total" widget="monetary"/>
+                <field name="replacement_total" widget="monetary"/>
+                <field name="difference_amount" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="cashier_id"/>
+                <field name="exchange_date"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'completed'"
+                       decoration-warning="state == 'refunded'"
+                       decoration-danger="state == 'cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_exchange_record_form" model="ir.ui.view">
+        <field name="name">pos.exchange.record.form</field>
+        <field name="model">pos.exchange.record</field>
+        <field name="arch" type="xml">
+            <form string="Exchange Record" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group string="General Information">
+                            <field name="name"/>
+                            <field name="source_order_id"/>
+                            <field name="exchange_order_id"/>
+                            <field name="customer_id"/>
+                            <field name="config_id"/>
+                            <field name="session_id"/>
+                            <field name="cashier_id"/>
+                            <field name="exchange_date"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'completed'"
+                                   decoration-warning="state == 'refunded'"
+                                   decoration-danger="state == 'cancelled'"/>
+                        </group>
+                        <group string="Financial Summary">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="old_total" widget="monetary"/>
+                            <field name="replacement_total" widget="monetary"/>
+                            <field name="difference_amount" widget="monetary"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Product Details">
+                            <field name="line_ids">
+                                <tree create="0" edit="0" delete="0">
+                                    <field name="old_product_id"/>
+                                    <field name="old_qty"/>
+                                    <field name="old_unit_price" widget="monetary"/>
+                                    <field name="old_total" widget="monetary"/>
+                                    <field name="replacement_product_id"/>
+                                    <field name="replacement_qty"/>
+                                    <field name="replacement_unit_price" widget="monetary"/>
+                                    <field name="replacement_total" widget="monetary"/>
+                                    <field name="difference_amount" widget="monetary"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pos_exchange_record_search" model="ir.ui.view">
+        <field name="name">pos.exchange.record.search</field>
+        <field name="model">pos.exchange.record</field>
+        <field name="arch" type="xml">
+            <search string="Exchange Records">
+                <field name="name"/>
+                <field name="source_order_id"/>
+                <field name="exchange_order_id"/>
+                <field name="customer_id"/>
+                <field name="cashier_id"/>
+                <field name="state"/>
+                <filter name="completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <filter name="refunded" string="Refunded" domain="[('state', '=', 'refunded')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pos_exchange_record" model="ir.actions.act_window">
+        <field name="name">Exchange Records</field>
+        <field name="res_model">pos.exchange.record</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_pos_exchange_record_tree"/>
+        <field name="search_view_id" ref="view_pos_exchange_record_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No exchange records found.</p>
+        </field>
+    </record>
+
     <menuitem
         id="menu_exchange_records"
         name="Exchange Records"
         parent="point_of_sale.menu_point_root"
+        action="action_pos_exchange_record"
         sequence="20"/>
 </odoo>

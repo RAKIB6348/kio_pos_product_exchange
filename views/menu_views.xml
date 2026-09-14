@@ -90,6 +90,12 @@
 
                 <separator/>
 
+                <filter name="exchange_date"
+                        string="Exchange Date"
+                        date="exchange_date"/>
+
+                <separator/>
+
                 <filter name="completed"
                         string="Completed"
                         domain="[('state', '=', 'completed')]"/>

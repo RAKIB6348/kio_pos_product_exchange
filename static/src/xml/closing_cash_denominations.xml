@@ -7,7 +7,7 @@
         <xpath expr="//div[hasclass('payment-methods-overview')]" position="after">
             <section t-if="pos.config.cash_control"
                      class="cash-denomination-details border-top mt-2 pt-2">
-                <h5 class="text-start mb-1">Cash Denomination Details</h5>
+                <h5 class="cash-denomination-title text-start mb-1">Cash Denomination Details</h5>
                 <div class="cash-denomination-table-container">
                     <table class="cash-denomination-table text-start">
                         <thead>
@@ -35,15 +35,19 @@
                             </tr>
                         </tbody>
                         <tfoot>
-                            <tr class="fw-bolder border-top">
+                            <tr>
                                 <td>Total</td>
                                 <td>
-                                    <span class="me-1">Total Notes:</span>
-                                    <span t-esc="getTotalNoteQuantity()"/>
+                                    <div class="cash-denomination-total d-flex align-items-center justify-content-end gap-2">
+                                        <span class="cash-denomination-total-label">Total Notes</span>
+                                        <span class="cash-denomination-total-value" t-esc="getTotalNoteQuantity()"/>
+                                    </div>
                                 </td>
                                 <td>
-                                    <span class="me-1">Total Amount:</span>
-                                    <span t-esc="getDenominationTotalAmount()"/>
+                                    <div class="cash-denomination-total d-flex align-items-center justify-content-end gap-2">
+                                        <span class="cash-denomination-total-label">Total Amount</span>
+                                        <span class="cash-denomination-total-value" t-esc="getDenominationTotalAmount()"/>
+                                    </div>
                                 </td>
                             </tr>
                         </tfoot>

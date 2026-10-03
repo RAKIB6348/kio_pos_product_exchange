@@ -19,36 +19,63 @@
         font-size: 0.875rem;
     }
 
+    .cash-denomination-title {
+        color: $gray-700;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
     .cash-denomination-table-container {
         overflow-x: auto;
         overflow-y: visible;
+        border-radius: $border-radius;
+        background-color: $white;
     }
 
     .cash-denomination-table {
         width: 100%;
+        table-layout: fixed;
         line-height: 1.1;
+        border: 1px solid $border-color;
+        color: $gray-700;
 
         th,
         td {
             padding: 2px map-get($spacers, 2);
             vertical-align: middle;
+            border: 1px solid $border-color;
         }
 
         thead th {
             padding-top: 3px;
             padding-bottom: 3px;
+            background-color: $gray-100;
+            font-weight: 600;
         }
 
         th:nth-child(1),
         td:nth-child(1) {
+            width: 32%;
             text-align: left;
         }
 
         th:nth-child(2),
-        td:nth-child(2),
+        td:nth-child(2) {
+            width: 32%;
+            text-align: right;
+        }
+
         th:nth-child(3),
         td:nth-child(3) {
+            width: 36%;
             text-align: right;
+        }
+
+        tbody td:first-child,
+        tbody td:last-child,
+        tfoot .cash-denomination-total-value {
+            font-variant-numeric: tabular-nums;
         }
 
         .cash-denomination-quantity {
@@ -65,7 +92,22 @@
         tfoot td {
             padding-top: 4px;
             padding-bottom: 2px;
+            background-color: $gray-100;
+            font-weight: 600;
             white-space: nowrap;
+        }
+
+        .cash-denomination-total-label {
+            color: $gray-600;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        .cash-denomination-total-value {
+            min-width: 1.5rem;
+            color: $gray-800;
+            font-weight: 700;
+            text-align: right;
         }
     }
 }

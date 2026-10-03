@@ -8,8 +8,8 @@ import { _t } from "@web/core/l10n/translation";
 export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
     static template = "kio_pos_product_exchange.ExchangeDetailsPopup";
     static defaultProps = {
-        confirmText: _t("Select Replacement Product"),
-        confirmSelectionText: _t("Confirm"),
+        validateText: _t("Validate"),
+        continueText: _t("Continue"),
         cancelText: _t("Cancel"),
         title: _t("Order Details"),
         cancelKey: "Escape",
@@ -19,7 +19,11 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
     setup() {
         super.setup();
         this.pos = usePos();
-        this.state = useState({ selectedLineId: null, confirmed: false });
+        this.state = useState({
+            selectedLineIds: [],
+            confirmed: false,
+            exchangeChoice: null,
+        });
     }
 
     get orderlines() {
@@ -27,40 +31,64 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
     }
 
     canSelectLine(line) {
-        return this.props.canExchangeLine ? this.props.canExchangeLine(line) : true;
+        return Boolean(
+            this.state.exchangeChoice &&
+                (this.props.canExchangeLine ? this.props.canExchangeLine(line) : true)
+        );
     }
 
     isLineSelected(line) {
-        return this.state.selectedLineId === line.id;
+        return this.state.selectedLineIds.includes(line.id);
     }
 
-    get selectedLine() {
-        return this.orderlines.find((line) => line.id === this.state.selectedLineId) || null;
+    get selectedLines() {
+        return this.orderlines.filter((line) => this.state.selectedLineIds.includes(line.id));
     }
 
     onLineClick(line) {
         if (!this.canSelectLine(line)) {
             return;
         }
-        this.state.selectedLineId = this.state.selectedLineId === line.id ? null : line.id;
+        this.state.selectedLineIds = this.isLineSelected(line)
+            ? this.state.selectedLineIds.filter((lineId) => lineId !== line.id)
+            : [...this.state.selectedLineIds, line.id];
         this.state.confirmed = false;
     }
 
-    onSelectReplacement() {
-        if (this.selectedLine) {
-            this.confirm();
-        }
+    selectExchangeChoice(choice) {
+        this.state.exchangeChoice = choice;
     }
 
-    onConfirmSelection() {
-        if (this.selectedLine) {
-            this.state.confirmed = true;
+    canContinue() {
+        return Boolean(this.selectedLines.length && this.state.exchangeChoice);
+    }
+
+    getTotalExchangeValue() {
+        return this.selectedLines.reduce(
+            (total, line) => total + Math.abs(line.get_price_with_tax()),
+            0
+        );
+    }
+
+    getFormattedTotalExchangeValue() {
+        return this.env.utils.formatCurrency(this.getTotalExchangeValue());
+    }
+
+    async confirm() {
+        if (this.canContinue()) {
+            return super.confirm();
         }
     }
 
     async getPayload() {
-        return this.selectedLine
-            ? { order: this.props.order, orderline: this.selectedLine }
+        return this.selectedLines.length
+            ? {
+                  order: this.props.order,
+                  orderline: this.selectedLines[0],
+                  orderlines: this.selectedLines,
+                  exchangeChoice: this.state.exchangeChoice,
+                  totalExchangeValue: this.getTotalExchangeValue(),
+              }
             : null;
     }
 }

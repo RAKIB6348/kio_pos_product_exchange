@@ -31,8 +31,37 @@
         }
     }
 
-    .exchange-products-title {
+    .exchange-type-section {
         border-top: 1px solid #dee2e6;
+        margin-top: 8px;
+        padding-top: 10px;
+        text-align: left;
+    }
+
+    .exchange-type-title {
+        margin-bottom: 6px;
+    }
+
+    .exchange-type-options {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .exchange-type-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        cursor: pointer;
+
+        input {
+            margin: 0;
+            cursor: pointer;
+        }
+    }
+
+    .exchange-products-title {
         margin-top: 8px;
         padding: 10px 0 4px;
     }
@@ -91,6 +120,16 @@
         }
     }
 
+    .exchange-selection-summary {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 8px;
+        padding: 8px;
+        border-top: 1px solid #dee2e6;
+        text-align: left;
+    }
+
     .exchange-confirmation-note {
         display: flex;
         align-items: center;
@@ -107,6 +146,13 @@
             opacity: 0.5;
         }
     }
+}
+
+.pos .modal-dialog .popup.exchange-details-popup {
+    width: 1000px;
+    max-width: calc(100vw - 32px);
+    margin-right: auto;
+    margin-left: auto;
 }
 
 .exchange-replacement-banner {

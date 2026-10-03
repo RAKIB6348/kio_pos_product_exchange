@@ -6,6 +6,7 @@ import { ProductScreen } from "@point_of_sale/app/screens/product_screen/product
 
 export class ExchangeButton extends Component {
     static template = "kio_pos_product_exchange.ExchangeButton";
+    static props = {};
 
     setup() {
         this.pos = usePos();

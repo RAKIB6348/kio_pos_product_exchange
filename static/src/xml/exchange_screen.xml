@@ -39,6 +39,28 @@
                     <span class="exchange-meta-value" t-esc="props.total" />
                 </div>
 
+                <div class="exchange-type-section">
+                    <div class="exchange-type-title fw-bolder">Exchange Type</div>
+                    <div class="exchange-type-options">
+                        <label class="exchange-type-option">
+                            <input type="radio"
+                                   t-att-name="'exchange_type_' + props.id"
+                                   value="same_product"
+                                   t-att-checked="state.exchangeChoice === 'same_product'"
+                                   t-on-change="() => this.selectExchangeChoice('same_product')"/>
+                            <span>Same Product</span>
+                        </label>
+                        <label class="exchange-type-option">
+                            <input type="radio"
+                                   t-att-name="'exchange_type_' + props.id"
+                                   value="new_product"
+                                   t-att-checked="state.exchangeChoice === 'new_product'"
+                                   t-on-change="() => this.selectExchangeChoice('new_product')"/>
+                            <span>New Product</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="exchange-products-title fw-bolder">Products</div>
                 <div class="exchange-product-list">
                     <t t-foreach="orderlines" t-as="line" t-key="line.id">
@@ -55,22 +77,17 @@
                         </div>
                     </t>
                 </div>
+                <div class="exchange-selection-summary">
+                    <span>Selected: <b t-esc="selectedLines.length"/> Products</span>
+                    <span>Total Exchange Amount: <b t-esc="getFormattedTotalExchangeValue()"/></span>
+                </div>
             </main>
-            <div t-if="state.confirmed and selectedLine" class="exchange-confirmation-note">
-                <i class="fa fa-check me-1" />
-                Old product confirmed:
-                <b t-esc="selectedLine.getDisplayData().productName" />
-            </div>
             <div class="footer modal-footer">
-                <!-- <div t-att-class="{ 'disabled': !selectedLine }"
-                    class="button select-confirm btn btn-lg btn-primary me-2"
-                    t-on-click="onConfirmSelection">
-                    <t t-esc="props.confirmSelectionText" />
-                </div> -->
-                <div t-att-class="{ 'disabled': !selectedLine }"
-                    class="button select-replacement btn btn-lg btn-primary me-2"
-                    t-on-click="onSelectReplacement">
-                    <t t-esc="props.confirmText" />
+                <div t-if="state.exchangeChoice"
+                    t-att-class="{ 'disabled': !canContinue() }"
+                    class="button continue-exchange btn btn-lg btn-primary me-2"
+                    t-on-click="confirm">
+                    <t t-esc="state.exchangeChoice === 'same_product' ? props.validateText : props.continueText" />
                 </div>
                 <div class="button cancel btn btn-lg btn-danger" t-on-click="cancel">
                     <t t-esc="props.cancelText" />
@@ -79,7 +96,34 @@
         </div>
     </t>
 
+    <t t-name="kio_pos_product_exchange.ActionpadWidget" t-inherit="point_of_sale.ActionpadWidget" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('pay-order-button')]" position="before">
+            <button t-if="pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === pos.get_order() &amp;&amp; pos.exchangeState.noRefundExchange"
+                    class="pay validation pay-order-button exchange-validate-button button btn d-flex flex-column flex-fill align-items-center justify-content-center fw-bolder btn-lg rounded-0 btn-primary"
+                    t-on-click="() => pos.get_order().pay()">
+                <div class="pay-circle d-flex align-items-center justify-content-center py-2 mb-2">
+                    <i class="fa fa-check" role="img" aria-label="Validate" title="Validate" />
+                </div>
+                <span class="text-white">Validate</span>
+            </button>
+        </xpath>
+        <xpath expr="//button[hasclass('pay-order-button') and not(hasclass('exchange-validate-button'))]" position="attributes">
+            <attribute name="t-if">!(pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === pos.get_order() &amp;&amp; pos.exchangeState.noRefundExchange)</attribute>
+        </xpath>
+    </t>
+
     <t t-name="kio_pos_product_exchange.ProductScreen" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('pay-button')]" position="before">
+            <button t-if="pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === currentOrder &amp;&amp; pos.exchangeState.noRefundExchange"
+                    class="btn-switchpane pay-button exchange-validate-button btn w-50 rounded-0 fw-bolder btn-primary"
+                    t-on-click="() => currentOrder.pay()">
+                <span class="fs-1 d-block">Validate</span>
+                <span><t t-esc="total" /></span>
+            </button>
+        </xpath>
+        <xpath expr="//button[hasclass('pay-button') and not(hasclass('exchange-validate-button'))]" position="attributes">
+            <attribute name="t-if">!(pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === currentOrder &amp;&amp; pos.exchangeState.noRefundExchange)</attribute>
+        </xpath>
     </t>
 
 </templates>

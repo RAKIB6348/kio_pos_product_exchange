@@ -16,7 +16,7 @@ export class ExchangeScreen extends TicketScreen {
         super.setup();
         this.exchangeMode = true;
         onWillUnmount(() => {
-            if (!this.pos.exchangeState?.waitingForReplacement) {
+            if (!this.pos.exchangeState?.returnLine) {
                 this.pos.exchangeState = null;
             }
         });
@@ -36,33 +36,75 @@ export class ExchangeScreen extends TicketScreen {
             total: this.getTotal(clickedOrder),
             canExchangeLine: (line) => this.isLineEligibleForExchange(line),
         });
-        if (confirmed && payload?.orderline) {
-            const orderline = payload.orderline;
-            const order = this.pos.get_order() || this.pos.add_new_order();
-            const returnLine = await order.add_product(orderline.product, {
-                quantity: -orderline.get_quantity(),
-                price: orderline.get_unit_price(),
-                merge: false,
-            });
-            returnLine.is_exchange_return = true;
+        if (confirmed && payload?.orderlines?.length) {
+            const orderlines = payload.orderlines;
+            const orderline = orderlines[0];
+            let order = this.pos.get_order() || this.pos.add_new_order();
+            if (
+                (order.get_orderlines().length || order.get_paymentlines().length)
+            ) {
+                order = this.pos.add_new_order();
+            }
+            const exchangeItems = [];
+            for (const sourceOrderline of orderlines) {
+                const returnLine = await order.add_product(sourceOrderline.product, {
+                    quantity: -sourceOrderline.get_quantity(),
+                    price: sourceOrderline.get_unit_price(),
+                    discount: sourceOrderline.get_discount(),
+                    tax_ids: sourceOrderline.get_taxes().map((tax) => tax.id),
+                    merge: false,
+                });
+                returnLine.is_exchange_return = true;
+                exchangeItems.push({ sourceOrderline, returnLine, replacementOrderline: null });
+            }
             const originalPartner = orderline.order.get_partner();
             if (originalPartner) {
                 order.set_partner(originalPartner);
             }
-            this.pos.exchangeState = {
+            const exchangeState = {
                 sourceOrder: orderline.order,
                 sourceOrderName: orderline.order.name,
                 sourceOrderline: orderline,
+                sourceOrderlines: orderlines,
                 product: orderline.product,
                 quantity: orderline.get_quantity(),
                 price: orderline.get_unit_price(),
                 partner: originalPartner,
-                returnLine,
+                returnLine: exchangeItems[0].returnLine,
+                returnLines: exchangeItems.map((item) => item.returnLine),
+                exchangeItems,
                 exchangeOrder: order,
-                waitingForReplacement: true,
+                exchangeType: payload.exchangeChoice,
+                oldTotal: payload.totalExchangeValue,
+                waitingForReplacement: payload.exchangeChoice !== "same_product",
                 replacementProduct: null,
             };
-            this.pos.showScreen("ProductScreen");
+            if (payload.exchangeChoice === "same_product") {
+                for (const item of exchangeItems) {
+                    item.replacementOrderline = await order.add_product(
+                        item.sourceOrderline.product,
+                        {
+                            quantity: item.sourceOrderline.get_quantity(),
+                            price: item.sourceOrderline.get_unit_price(),
+                            discount: item.sourceOrderline.get_discount(),
+                            tax_ids: item.sourceOrderline.get_taxes().map((tax) => tax.id),
+                            merge: false,
+                        }
+                    );
+                }
+                exchangeState.replacementProduct = exchangeItems[0].replacementOrderline.product;
+                exchangeState.replacementOrderline = exchangeItems[0].replacementOrderline;
+                exchangeState.replacementOrderlines = exchangeItems.map(
+                    (item) => item.replacementOrderline
+                );
+            }
+            this.pos.exchangeState = exchangeState;
+            if (payload.exchangeChoice === "same_product") {
+                order.autoValidateExchange = true;
+                this.pos.showScreen("PaymentScreen");
+            } else {
+                this.pos.showScreen("ProductScreen");
+            }
         }
     }
 

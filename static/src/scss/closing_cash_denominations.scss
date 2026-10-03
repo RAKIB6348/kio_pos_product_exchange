@@ -1,0 +1,77 @@
+.pos .close-pos-popup {
+    display: flex;
+    flex-direction: column;
+    max-height: 800px;
+    overflow: hidden;
+
+    > .modal-header,
+    > .modal-footer {
+        flex: 0 0 auto;
+    }
+
+    > .modal-body {
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .cash-denomination-details {
+        font-size: 0.875rem;
+    }
+
+    .cash-denomination-table-container {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    .cash-denomination-table {
+        width: 100%;
+        line-height: 1.1;
+
+        th,
+        td {
+            padding: 2px map-get($spacers, 2);
+            vertical-align: middle;
+        }
+
+        thead th {
+            padding-top: 3px;
+            padding-bottom: 3px;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            text-align: left;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2),
+        th:nth-child(3),
+        td:nth-child(3) {
+            text-align: right;
+        }
+
+        .cash-denomination-quantity {
+            width: 88px;
+            min-height: 26px;
+            height: 26px;
+            margin-left: auto;
+            padding: 1px 6px;
+            font-size: 0.875rem;
+            line-height: 1;
+            text-align: right;
+        }
+
+        tfoot td {
+            padding-top: 4px;
+            padding-bottom: 2px;
+            white-space: nowrap;
+        }
+    }
+}
+
+@media screen and (max-height: 832px) {
+    .pos .close-pos-popup {
+        max-height: calc(100vh - 2rem);
+    }
+}

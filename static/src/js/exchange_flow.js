@@ -12,38 +12,14 @@ patch(PosStore.prototype, {
         const originalExchangeTotal = Number(exchangeState.oldTotal) || 0;
         const replacementTotal = replacementLine.get_price_with_tax();
         const rawDifference = replacementTotal - originalExchangeTotal;
+        const customerPayable = Math.max(rawDifference, 0);
+        const customerRefund = 0;
         const noRefundExchange = rawDifference <= 0;
 
-        if (noRefundExchange) {
-            const returnLines = exchangeState.returnLines || [exchangeState.returnLine];
-            const currentReturnTotal = returnLines.reduce(
-                (total, line) => total + Math.abs(line.get_price_with_tax()),
-                0
-            );
-            const creditRatio = currentReturnTotal ? replacementTotal / currentReturnTotal : 0;
-            for (const returnLine of returnLines) {
-                returnLine.set_unit_price(returnLine.get_unit_price() * creditRatio);
-            }
-            for (let index = 0; index < 12; index++) {
-                const orderTotal = replacementLine.order.get_total_with_tax();
-                if (this.env.utils.floatIsZero(orderTotal)) {
-                    break;
-                }
-                const returnLine = returnLines[returnLines.length - 1];
-                const currentLineTotal = Math.abs(returnLine.get_price_with_tax());
-                if (!currentLineTotal) {
-                    break;
-                }
-                const targetLineTotal = Math.max(0, currentLineTotal + orderTotal);
-                const currentUnitPrice = returnLine.get_unit_price();
-                const targetUnitPrice = currentUnitPrice * (targetLineTotal / currentLineTotal);
-                returnLine.set_unit_price(targetUnitPrice);
-                if (returnLine.get_unit_price() === currentUnitPrice) {
-                    break;
-                }
-            }
-            replacementLine.order.autoValidateExchange = true;
-        }
+        // Keep the signed product-line total visible. A lower-value replacement is
+        // non-refundable, but that policy must not rewrite either product's price
+        // or replace the raw order total with the customer payable amount.
+        replacementLine.order.autoValidateExchange = false;
 
         this.exchangeState = Object.assign({}, exchangeState, {
             replacementProduct: replacementLine.product,
@@ -52,7 +28,10 @@ patch(PosStore.prototype, {
             originalExchangeTotal,
             replacementTotal,
             rawDifference,
-            payableDifference: Math.max(0, rawDifference),
+            customerPayable,
+            customerRefund,
+            // Retained for the existing exchange export/record flow.
+            payableDifference: customerPayable,
             noRefundExchange,
             waitingForReplacement: false,
         });

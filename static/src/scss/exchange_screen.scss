@@ -71,6 +71,20 @@
         flex-direction: column;
         gap: 2px;
 
+        .exchange-product-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 6px;
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-weight: 600;
+
+            .exchange-col-product {
+                padding-left: 28px;
+            }
+        }
+
         .exchange-product-row {
             display: flex;
             align-items: center;
@@ -106,16 +120,37 @@
                 white-space: nowrap;
             }
 
-            .exchange-col-qty {
-                flex: 0 0 60px;
+            .exchange-col-purchased-qty {
+                flex: 0 0 120px;
                 text-align: right;
                 color: #6c757d;
             }
 
-            .exchange-col-price {
-                flex: 0 0 90px;
+            .exchange-col-exchange-qty {
+                display: flex;
+                flex: 0 0 120px;
+                justify-content: flex-end;
+
+                .exchange-qty-input {
+                    width: 90px;
+                    text-align: right;
+                }
+            }
+        }
+
+        .exchange-product-header {
+            .exchange-col-product {
+                flex: 1 1 auto;
+            }
+
+            .exchange-col-purchased-qty {
+                flex: 0 0 120px;
                 text-align: right;
-                font-weight: 600;
+            }
+
+            .exchange-col-exchange-qty {
+                flex: 0 0 120px;
+                text-align: right;
             }
         }
     }

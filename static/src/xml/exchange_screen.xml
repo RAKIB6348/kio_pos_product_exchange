@@ -63,6 +63,11 @@
 
                 <div class="exchange-products-title fw-bolder">Products</div>
                 <div class="exchange-product-list">
+                    <div class="exchange-product-header">
+                        <span class="exchange-col-product">Product</span>
+                        <span class="exchange-col-purchased-qty">Purchased Qty</span>
+                        <span class="exchange-col-exchange-qty">Exchange Qty</span>
+                    </div>
                     <t t-foreach="orderlines" t-as="line" t-key="line.id">
                         <div class="exchange-product-row"
                             t-att-class="{
@@ -72,8 +77,18 @@
                             t-on-click="() => this.onLineClick(line)">
                             <i t-attf-class="fa {{ isLineSelected(line) ? 'fa-check-square-o' : 'fa-square-o' }}"/>
                             <span class="exchange-col-product" t-esc="line.getDisplayData().productName" />
-                            <span class="exchange-col-qty">Qty: <t t-esc="line.getDisplayData().qty" /></span>
-                            <span class="exchange-col-price" t-esc="line.getDisplayData().price" />
+                            <span class="exchange-col-purchased-qty" t-esc="line.getDisplayData().qty"/>
+                            <span class="exchange-col-exchange-qty" t-on-click.stop="() => {}">
+                                <input type="number"
+                                       min="0"
+                                       step="any"
+                                       t-att-max="line.get_quantity()"
+                                       t-att-value="getExchangeQty(line)"
+                                       t-att-disabled="!isLineSelected(line)"
+                                       t-att-class="{ 'is-invalid': isLineSelected(line) &amp;&amp; !isExchangeQtyValid(line) }"
+                                       class="form-control exchange-qty-input"
+                                       t-on-input="(event) => this.onExchangeQtyInput(line, event)"/>
+                            </span>
                         </div>
                     </t>
                 </div>

@@ -21,6 +21,7 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.state = useState({
             selectedLineIds: [],
+            exchangeQuantities: {},
             confirmed: false,
             exchangeChoice: null,
         });
@@ -49,10 +50,31 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
         if (!this.canSelectLine(line)) {
             return;
         }
-        this.state.selectedLineIds = this.isLineSelected(line)
-            ? this.state.selectedLineIds.filter((lineId) => lineId !== line.id)
-            : [...this.state.selectedLineIds, line.id];
+        if (this.isLineSelected(line)) {
+            this.state.selectedLineIds = this.state.selectedLineIds.filter(
+                (lineId) => lineId !== line.id
+            );
+            delete this.state.exchangeQuantities[line.id];
+        } else {
+            this.state.selectedLineIds = [...this.state.selectedLineIds, line.id];
+            this.state.exchangeQuantities[line.id] = line.get_quantity();
+        }
         this.state.confirmed = false;
+    }
+
+    onExchangeQtyInput(line, event) {
+        this.state.exchangeQuantities[line.id] = event.target.value;
+        this.state.confirmed = false;
+    }
+
+    getExchangeQty(line) {
+        return this.state.exchangeQuantities[line.id] ?? "";
+    }
+
+    isExchangeQtyValid(line) {
+        const exchangeQty = Number(this.getExchangeQty(line));
+        const purchasedQty = Number(line.get_quantity());
+        return Number.isFinite(exchangeQty) && exchangeQty > 0 && exchangeQty <= purchasedQty;
     }
 
     selectExchangeChoice(choice) {
@@ -60,7 +82,11 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
     }
 
     canContinue() {
-        return Boolean(this.selectedLines.length && this.state.exchangeChoice);
+        return Boolean(
+            this.selectedLines.length &&
+                this.state.exchangeChoice &&
+                this.selectedLines.every((line) => this.isExchangeQtyValid(line))
+        );
     }
 
     getTotalExchangeValue() {
@@ -86,6 +112,9 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
                   order: this.props.order,
                   orderline: this.selectedLines[0],
                   orderlines: this.selectedLines,
+                  exchangeQuantities: Object.fromEntries(
+                      this.selectedLines.map((line) => [line.id, Number(this.getExchangeQty(line))])
+                  ),
                   exchangeChoice: this.state.exchangeChoice,
                   totalExchangeValue: this.getTotalExchangeValue(),
               }

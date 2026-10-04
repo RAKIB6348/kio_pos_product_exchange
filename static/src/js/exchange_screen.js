@@ -47,8 +47,9 @@ export class ExchangeScreen extends TicketScreen {
             }
             const exchangeItems = [];
             for (const sourceOrderline of orderlines) {
+                const exchangeQty = payload.exchangeQuantities[sourceOrderline.id];
                 const returnLine = await order.add_product(sourceOrderline.product, {
-                    quantity: -sourceOrderline.get_quantity(),
+                    quantity: -exchangeQty,
                     price: sourceOrderline.get_unit_price(),
                     discount: sourceOrderline.get_discount(),
                     tax_ids: sourceOrderline.get_taxes().map((tax) => tax.id),

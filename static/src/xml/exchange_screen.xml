@@ -113,31 +113,40 @@
 
     <t t-name="kio_pos_product_exchange.ActionpadWidget" t-inherit="point_of_sale.ActionpadWidget" t-inherit-mode="extension">
         <xpath expr="//button[hasclass('pay-order-button')]" position="before">
-            <button t-if="pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === pos.get_order() &amp;&amp; pos.exchangeState.noRefundExchange"
+            <button t-if="pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === pos.get_order() &amp;&amp; !pos.exchangeState.waitingForReplacement"
                     class="pay validation pay-order-button exchange-validate-button button btn d-flex flex-column flex-fill align-items-center justify-content-center fw-bolder btn-lg rounded-0 btn-primary"
                     t-on-click="() => pos.get_order().pay()">
                 <div class="pay-circle d-flex align-items-center justify-content-center py-2 mb-2">
-                    <i class="fa fa-check" role="img" aria-label="Validate" title="Validate" />
+                    <i t-att-class="pos.isExchangePaymentRequired(pos.get_order()) ? 'oi oi-chevron-right' : 'fa fa-check'"
+                       role="img"
+                       t-att-aria-label="pos.isExchangePaymentRequired(pos.get_order()) ? 'Payment' : 'Validate'"
+                       t-att-title="pos.isExchangePaymentRequired(pos.get_order()) ? 'Payment' : 'Validate'" />
                 </div>
-                <span class="text-white">Validate</span>
+                <span class="text-white">
+                    <t t-if="pos.isExchangePaymentRequired(pos.get_order())">Payment</t>
+                    <t t-else="">Validate</t>
+                </span>
             </button>
         </xpath>
         <xpath expr="//button[hasclass('pay-order-button') and not(hasclass('exchange-validate-button'))]" position="attributes">
-            <attribute name="t-if">!(pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === pos.get_order() &amp;&amp; pos.exchangeState.noRefundExchange)</attribute>
+            <attribute name="t-if">!(pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === pos.get_order() &amp;&amp; !pos.exchangeState.waitingForReplacement)</attribute>
         </xpath>
     </t>
 
     <t t-name="kio_pos_product_exchange.ProductScreen" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
         <xpath expr="//button[hasclass('pay-button')]" position="before">
-            <button t-if="pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === currentOrder &amp;&amp; pos.exchangeState.noRefundExchange"
+            <button t-if="pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === currentOrder &amp;&amp; !pos.exchangeState.waitingForReplacement"
                     class="btn-switchpane pay-button exchange-validate-button btn w-50 rounded-0 fw-bolder btn-primary"
                     t-on-click="() => currentOrder.pay()">
-                <span class="fs-1 d-block">Validate</span>
-                <span><t t-esc="total" /></span>
+                <span class="fs-1 d-block">
+                    <t t-if="pos.isExchangePaymentRequired(currentOrder)">Payment</t>
+                    <t t-else="">Validate</t>
+                </span>
+                <span t-esc="env.utils.formatCurrency(pos.getExchangePayableAmount(currentOrder))" />
             </button>
         </xpath>
         <xpath expr="//button[hasclass('pay-button') and not(hasclass('exchange-validate-button'))]" position="attributes">
-            <attribute name="t-if">!(pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === currentOrder &amp;&amp; pos.exchangeState.noRefundExchange)</attribute>
+            <attribute name="t-if">!(pos.exchangeState &amp;&amp; pos.exchangeState.exchangeOrder === currentOrder &amp;&amp; !pos.exchangeState.waitingForReplacement)</attribute>
         </xpath>
     </t>
 

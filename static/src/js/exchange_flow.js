@@ -8,6 +8,15 @@ patch(PosStore.prototype, {
         this.exchangeState = null;
     },
 
+    getExchangePayableAmount(order) {
+        const orderTotal = this.env.utils.roundCurrency(order?.get_total_with_tax() || 0);
+        return Math.max(orderTotal, 0);
+    },
+
+    isExchangePaymentRequired(order) {
+        return this.getExchangePayableAmount(order) > 0;
+    },
+
     setExchangeReplacement(exchangeState, replacementLine) {
         const originalExchangeTotal = Number(exchangeState.oldTotal) || 0;
         const replacementTotal = replacementLine.get_price_with_tax();

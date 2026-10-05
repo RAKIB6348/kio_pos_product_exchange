@@ -2,8 +2,51 @@
 
 import { patch } from "@web/core/utils/patch";
 import { Order, Orderline } from "@point_of_sale/app/store/models";
+import { ConfirmPopup } from "@point_of_sale/app/utils/confirm_popup/confirm_popup";
+import { _t } from "@web/core/l10n/translation";
 
 patch(Order.prototype, {
+    async pay() {
+        if (
+            this.exchangeState?.exchangeType === "new_product" &&
+            !this.pos.validateExchangeBeforePayment(this)
+        ) {
+            return;
+        }
+        const exchangeTotals = this.pos.getExchangeTotals?.(this);
+        if (
+            this.exchangeState?.exchangeType === "new_product" &&
+            exchangeTotals?.isExchangeComplete &&
+            this.pos.env.utils.roundCurrency(exchangeTotals.customerPayable) === 0
+        ) {
+            if (!this.canPay()) {
+                return;
+            }
+            if (
+                this.orderlines.some(
+                    (line) =>
+                        line.get_product().tracking !== "none" && !line.has_valid_product_lot()
+                ) &&
+                (this.pos.picking_type.use_create_lots || this.pos.picking_type.use_existing_lots)
+            ) {
+                const { confirmed } = await this.pos.env.services.popup.add(ConfirmPopup, {
+                    title: _t("Some Serial/Lot Numbers are missing"),
+                    body: _t(
+                        "You are trying to sell products with serial/lot numbers, but some of them are not set.\nWould you like to proceed anyway?"
+                    ),
+                    confirmText: _t("Yes"),
+                    cancelText: _t("No"),
+                });
+                if (!confirmed) {
+                    return;
+                }
+            }
+            await this.pos.finalizeZeroPayExchange(this);
+            return;
+        }
+        return super.pay(...arguments);
+    },
+
     async add_product(product, options) {
         const line = await super.add_product(product, options);
         if (
@@ -65,26 +108,24 @@ patch(Order.prototype, {
             return json;
         }
 
-        const oldTotal =
-            state.originalExchangeTotal ??
+        const oldTotal = this.pos.getExchangeTotals(this)?.returnedTotal ??
             exchangeItems.reduce(
                 (total, item) => total + Math.abs(item.returnLine.get_price_with_tax()),
                 0
             );
 
-        const replacementTotal =
-            state.exchangeType === "same_product"
+        const replacementTotal = this.pos.getExchangeTotals(this)?.replacementTotal ??
+            (state.exchangeType === "same_product"
                 ? oldTotal
                 : replacementLines.reduce(
                       (total, line) => total + line.get_price_with_tax(),
                       0
-                  );
+                  ));
 
         const rawDifference = replacementTotal - oldTotal;
         const payableDifference =
-            state.exchangeType === "same_product"
-                ? 0
-                : Math.max(0, rawDifference);
+            this.pos.getExchangeTotals(this)?.customerPayable ??
+            (state.exchangeType === "same_product" ? 0 : Math.max(0, rawDifference));
 
         const oldLines = exchangeItems.map((item) => ({
             original_order_line_id: item.sourceOrderline.id,
@@ -219,27 +260,31 @@ patch(Order.prototype, {
             is_replacement: true,
         }));
 
+        const exchangeTotals = this.pos?.getExchangeTotals?.(this);
         const oldTotal =
+            exchangeTotals?.returnedTotal ??
             exchangeData?.old_total ??
             state?.originalExchangeTotal ??
             returnLines.reduce((sum, line) => sum + Math.abs(line.get_price_with_tax()), 0);
 
         const replacementTotal =
-            state?.exchangeType === "same_product"
+            exchangeTotals?.replacementTotal ??
+            (state?.exchangeType === "same_product"
                 ? oldTotal
                 : exchangeData?.replacement_total ??
                   state?.replacementTotal ??
-                  replacementLines.reduce((sum, line) => sum + line.get_price_with_tax(), 0);
+                  replacementLines.reduce((sum, line) => sum + line.get_price_with_tax(), 0));
 
         const rawDifference = replacementTotal - oldTotal;
         const payableDifference =
-            state?.exchangeType === "same_product"
+            exchangeTotals?.customerPayable ??
+            (state?.exchangeType === "same_product"
                 ? 0
                 : exchangeData?.difference_amount ??
                   state?.payableDifference ??
                   (this.pos?.getExchangePayableAmount
                       ? this.pos.getExchangePayableAmount(this)
-                      : Math.max(0, rawDifference));
+                      : Math.max(0, rawDifference)));
 
         result.exchange_type =
             state?.exchangeType || (rawDifference === 0 ? "same_product" : "new_product");

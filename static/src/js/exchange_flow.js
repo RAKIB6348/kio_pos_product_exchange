@@ -2,6 +2,8 @@
 
 import { patch } from "@web/core/utils/patch";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+import { _t } from "@web/core/l10n/translation";
 
 patch(PosStore.prototype, {
     clearExchangeState() {
@@ -9,12 +11,79 @@ patch(PosStore.prototype, {
     },
 
     getExchangePayableAmount(order) {
+        const exchangeTotals = this.getExchangeTotals(order);
+        if (exchangeTotals) {
+            return exchangeTotals.customerPayable;
+        }
         const orderTotal = this.env.utils.roundCurrency(order?.get_total_with_tax() || 0);
         return Math.max(orderTotal, 0);
     },
 
     isExchangePaymentRequired(order) {
         return this.getExchangePayableAmount(order) > 0;
+    },
+
+    getExchangeTotals(order) {
+        const targetOrder = order || this.get_order();
+        const state = targetOrder?.exchangeState || this.exchangeState;
+        if (!targetOrder || !state || state.exchangeOrder && state.exchangeOrder !== targetOrder) {
+            return null;
+        }
+
+        const round = (value) => this.env.utils.roundCurrency(value || 0);
+        const returnLines = targetOrder.get_orderlines().filter(
+            (line) => line.is_exchange_return || line.get_quantity() < 0
+        );
+        const replacementLines = targetOrder.get_orderlines().filter(
+            (line) => line.is_exchange_replacement || line.get_quantity() > 0
+        );
+        const returnedTotal = round(
+            returnLines.reduce((total, line) => total + Math.abs(line.get_price_with_tax()), 0)
+        );
+        const replacementTotal = round(
+            state.exchangeType === "same_product"
+                ? returnedTotal
+                : replacementLines.reduce((total, line) => total + line.get_price_with_tax(), 0)
+        );
+        const rawDifference = round(replacementTotal - returnedTotal);
+        const remainingToAdjust = round(Math.max(returnedTotal - replacementTotal, 0));
+        const customerPayable = round(Math.max(replacementTotal - returnedTotal, 0));
+
+        return {
+            returnedTotal,
+            replacementTotal,
+            rawDifference,
+            remainingToAdjust,
+            customerPayable: state.exchangeType === "same_product" ? 0 : customerPayable,
+            isExchangeComplete:
+                state.exchangeType === "same_product" || remainingToAdjust === 0,
+            returnLines,
+            replacementLines,
+        };
+    },
+
+    validateExchangeBeforePayment(order) {
+        const state = order?.exchangeState || this.exchangeState;
+        if (!state || state.exchangeType !== "new_product") {
+            return true;
+        }
+        const totals = this.getExchangeTotals(order);
+        if (!totals || totals.isExchangeComplete) {
+            return true;
+        }
+        const remaining = this.env.utils.formatCurrency(totals.remainingToAdjust);
+        this.env.services.popup.add(ErrorPopup, {
+            title: _t("Validation Error"),
+            body:
+                _t("The replacement product total is still") +
+                ` ${remaining} ` +
+                _t("below the returned product value.") +
+                "\n\n" +
+                _t("Please add more products worth at least") +
+                ` ${remaining} ` +
+                _t("to complete the exchange."),
+        });
+        return false;
     },
 
     updateExchangeState(order) {
@@ -41,21 +110,14 @@ patch(PosStore.prototype, {
             line.is_exchange_replacement = true;
         }
 
-        const originalExchangeTotal =
-            state.originalExchangeTotal ??
-            state.oldTotal ??
-            returnLines.reduce((sum, line) => sum + Math.abs(line.get_price_with_tax()), 0);
-
-        const replacementTotal =
-            state.exchangeType === "same_product"
-                ? originalExchangeTotal
-                : replacementLines.reduce((sum, line) => sum + line.get_price_with_tax(), 0);
-
-        const rawDifference = replacementTotal - originalExchangeTotal;
-        const customerPayable =
-            state.exchangeType === "same_product" ? 0 : Math.max(rawDifference, 0);
+        const totals = this.getExchangeTotals(targetOrder);
+        const originalExchangeTotal = totals.returnedTotal;
+        const replacementTotal = totals.replacementTotal;
+        const rawDifference = totals.rawDifference;
+        const customerPayable = totals.customerPayable;
         const customerRefund = 0;
-        const noRefundExchange = rawDifference <= 0;
+        const noRefundExchange =
+            state.exchangeType !== "same_product" && totals.remainingToAdjust > 0;
 
         const waitingForReplacement =
             state.exchangeType !== "same_product" && replacementLines.length === 0;
@@ -74,6 +136,8 @@ patch(PosStore.prototype, {
             customerRefund,
             payableDifference: customerPayable,
             noRefundExchange,
+            remainingToAdjust: totals.remainingToAdjust,
+            isExchangeComplete: totals.isExchangeComplete,
             waitingForReplacement,
         });
 

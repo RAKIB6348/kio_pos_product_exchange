@@ -3,6 +3,7 @@
 import logging
 
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 _logger = logging.getLogger(__name__)
@@ -47,9 +48,31 @@ class PosOrder(models.Model):
         )
         order_id = super()._process_order(order, draft, existing_order)
         if not draft and exchange_data.get("is_exchange_order") and order_id:
+            exchange_order = self.browse(order_id)
+            self._validate_exchange_value(exchange_data, exchange_order)
             _logger.info("Creating exchange record for POS order id=%s", order_id)
-            self.browse(order_id)._create_exchange_record(exchange_data)
+            exchange_order._create_exchange_record(exchange_data)
         return order_id
+
+    @api.model
+    def _validate_exchange_value(self, exchange_data, exchange_order):
+        if exchange_data.get("exchange_type") != "new_product":
+            return
+
+        currency = exchange_order.currency_id or self.env.company.currency_id
+        return_lines = exchange_order.lines.filtered(lambda line: line.qty < 0)
+        replacement_lines = exchange_order.lines.filtered(lambda line: line.qty > 0)
+        old_total = currency.round(sum(abs(line.price_subtotal_incl) for line in return_lines))
+        replacement_total = currency.round(
+            sum(line.price_subtotal_incl for line in replacement_lines)
+        )
+        if currency.compare_amounts(replacement_total, old_total) < 0:
+            remaining = currency.round(old_total - replacement_total)
+            raise ValidationError(
+                "The replacement product total is still %s below the returned product value. "
+                "Please add more products worth at least %s to complete the exchange."
+                % (f"{remaining:.{currency.decimal_places}f}", f"{remaining:.{currency.decimal_places}f}")
+            )
 
     def _create_exchange_record(self, exchange_data):
         self.ensure_one()

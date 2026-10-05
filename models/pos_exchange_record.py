@@ -53,6 +53,12 @@ class PosExchangeRecord(models.Model):
     line_ids = fields.One2many(
         "pos.exchange.record.line", "exchange_id", string="Exchange Lines", readonly=True
     )
+    replacement_line_ids = fields.One2many(
+        "pos.exchange.record.replacement.line",
+        "exchange_id",
+        string="Exchange Product Lines",
+        readonly=True,
+    )
 
     _sql_constraints = [
         ("exchange_order_unique", "unique(exchange_order_id)", "An exchange record already exists for this POS order."),
@@ -105,3 +111,37 @@ class PosExchangeRecordLine(models.Model):
     currency_id = fields.Many2one(
         "res.currency", related="exchange_id.currency_id", store=True, readonly=True
     )
+
+
+class PosExchangeRecordReplacementLine(models.Model):
+    _name = "pos.exchange.record.replacement.line"
+    _description = "POS Exchange Record Replacement Line"
+    _order = "id"
+
+    exchange_id = fields.Many2one(
+        "pos.exchange.record",
+        string="Exchange",
+        required=True,
+        readonly=True,
+        ondelete="cascade",
+        index=True,
+    )
+    replacement_product_id = fields.Many2one(
+        "product.product", string="Replacement Product", readonly=True, index=True
+    )
+    replacement_product_barcode = fields.Char(
+        string="Replacement Product Barcode",
+        related="replacement_product_id.barcode",
+        readonly=True,
+    )
+    replacement_qty = fields.Float(string="Replacement Quantity", readonly=True)
+    replacement_unit_price = fields.Monetary(
+        string="Replacement Unit Price", readonly=True, currency_field="currency_id"
+    )
+    replacement_total = fields.Monetary(
+        string="Replacement Total", readonly=True, currency_field="currency_id"
+    )
+    currency_id = fields.Many2one(
+        "res.currency", related="exchange_id.currency_id", store=True, readonly=True
+    )
+

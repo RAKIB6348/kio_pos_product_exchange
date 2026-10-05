@@ -59,7 +59,7 @@
                                 </tree>
                             </field>
                             <separator string="Exchange Product"/>
-                            <field name="line_ids" class="exchange-detail-lines" nolabel="1" readonly="1">
+                            <field name="replacement_line_ids" class="exchange-detail-lines" nolabel="1" readonly="1">
                                 <tree create="0" edit="0" delete="0">
                                     <field name="replacement_product_id" string="Product"/>
                                     <field name="replacement_product_barcode" string="Barcode"/>

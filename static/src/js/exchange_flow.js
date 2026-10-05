@@ -17,60 +17,85 @@ patch(PosStore.prototype, {
         return this.getExchangePayableAmount(order) > 0;
     },
 
-    setExchangeReplacement(exchangeState, replacementLine) {
-        const originalExchangeTotal = Number(exchangeState.oldTotal) || 0;
-        const replacementTotal = replacementLine.get_price_with_tax();
+    updateExchangeState(order) {
+        const targetOrder = order || this.get_order();
+        if (!targetOrder) {
+            return null;
+        }
+        const state = targetOrder.exchangeState || this.exchangeState;
+        if (!state || (state.exchangeOrder && state.exchangeOrder !== targetOrder)) {
+            return null;
+        }
+
+        const allLines = targetOrder.get_orderlines();
+        const returnLines = allLines.filter(
+            (line) => line.is_exchange_return || line.get_quantity() < 0
+        );
+        const replacementLines = allLines.filter(
+            (line) =>
+                line.is_exchange_replacement ||
+                (!line.is_exchange_return && line.get_quantity() > 0)
+        );
+
+        for (const line of replacementLines) {
+            line.is_exchange_replacement = true;
+        }
+
+        const originalExchangeTotal =
+            state.originalExchangeTotal ??
+            state.oldTotal ??
+            returnLines.reduce((sum, line) => sum + Math.abs(line.get_price_with_tax()), 0);
+
+        const replacementTotal =
+            state.exchangeType === "same_product"
+                ? originalExchangeTotal
+                : replacementLines.reduce((sum, line) => sum + line.get_price_with_tax(), 0);
+
         const rawDifference = replacementTotal - originalExchangeTotal;
-        const customerPayable = Math.max(rawDifference, 0);
+        const customerPayable =
+            state.exchangeType === "same_product" ? 0 : Math.max(rawDifference, 0);
         const customerRefund = 0;
         const noRefundExchange = rawDifference <= 0;
 
-        // Keep the signed product-line total visible. A lower-value replacement is
-        // non-refundable, but that policy must not rewrite either product's price
-        // or replace the raw order total with the customer payable amount.
-        replacementLine.order.autoValidateExchange = false;
+        const waitingForReplacement =
+            state.exchangeType !== "same_product" && replacementLines.length === 0;
 
-        this.exchangeState = Object.assign({}, exchangeState, {
-            replacementProduct: replacementLine.product,
-            replacementOrderline: replacementLine,
-            replacementOrderlines: [replacementLine],
+        targetOrder.autoValidateExchange = false;
+
+        const updatedState = Object.assign({}, state, {
+            returnLines,
+            replacementProduct: replacementLines[0]?.product || null,
+            replacementOrderline: replacementLines[0] || null,
+            replacementOrderlines: replacementLines,
             originalExchangeTotal,
             replacementTotal,
             rawDifference,
             customerPayable,
             customerRefund,
-            // Retained for the existing exchange export/record flow.
             payableDifference: customerPayable,
             noRefundExchange,
-            waitingForReplacement: false,
+            waitingForReplacement,
         });
-        replacementLine.is_exchange_replacement = true;
-        replacementLine.order.is_exchange_order = true;
-        replacementLine.order.exchangeState = this.exchangeState;
-        return this.exchangeState;
+
+        this.exchangeState = updatedState;
+        targetOrder.is_exchange_order = true;
+        targetOrder.exchangeState = updatedState;
+
+        return updatedState;
+    },
+
+    setExchangeReplacement(exchangeState, replacementLine) {
+        if (replacementLine) {
+            replacementLine.is_exchange_replacement = true;
+        }
+        return this.updateExchangeState(replacementLine?.order || this.get_order());
     },
 
     async addProductToCurrentOrder(product, options = {}) {
-        const exchangeState = this.exchangeState;
-        const order = this.get_order();
-        const replacementProduct = Number.isInteger(product)
-            ? this.db.get_product_by_id(product)
-            : product;
-        const existingLineIds = new Set(order?.get_orderlines().map((line) => line.id) || []);
         const result = await super.addProductToCurrentOrder(product, options);
-        if (exchangeState?.waitingForReplacement && this.exchangeState?.waitingForReplacement) {
-            const currentOrder = this.get_order();
-            const replacementLine = currentOrder?.get_selected_orderline()?.product === replacementProduct
-                ? currentOrder.get_selected_orderline()
-                : currentOrder?.get_orderlines().find(
-                      (line) =>
-                          line.product === replacementProduct &&
-                          !existingLineIds.has(line.id) &&
-                          line !== exchangeState.returnLine
-                  );
-            if (replacementLine) {
-                this.setExchangeReplacement(exchangeState, replacementLine);
-            }
+        const order = this.get_order();
+        if (order && (order.is_exchange_order || this.exchangeState?.exchangeOrder === order)) {
+            this.updateExchangeState(order);
         }
         return result;
     },

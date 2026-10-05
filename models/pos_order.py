@@ -37,12 +37,13 @@ class PosOrder(models.Model):
     def _process_order(self, order, draft, existing_order):
         exchange_data = (order.get("data") or {}).get("exchange_data") or {}
         _logger.info(
-            "POS exchange payload: draft=%s is_exchange_order=%s source_order_id=%s source_order_line_id=%s lines=%s",
+            "POS exchange payload: draft=%s is_exchange_order=%s source_order_id=%s source_order_line_id=%s old_lines=%s replacement_lines=%s",
             draft,
             exchange_data.get("is_exchange_order"),
             exchange_data.get("source_order_id"),
             exchange_data.get("source_order_line_id"),
-            len(exchange_data.get("lines", [])),
+            len(exchange_data.get("old_lines", []) or exchange_data.get("lines", [])),
+            len(exchange_data.get("replacement_lines", [])),
         )
         order_id = super()._process_order(order, draft, existing_order)
         if not draft and exchange_data.get("is_exchange_order") and order_id:
@@ -76,9 +77,12 @@ class PosOrder(models.Model):
             )
             return False
 
-        line_values = []
-        for data in exchange_data.get("lines", []):
-            line_values.append(
+        old_line_items = exchange_data.get("old_lines") or exchange_data.get("lines") or []
+        replacement_line_items = exchange_data.get("replacement_lines") or []
+
+        old_line_values = []
+        for data in old_line_items:
+            old_line_values.append(
                 (
                     0,
                     0,
@@ -96,24 +100,43 @@ class PosOrder(models.Model):
                     },
                 )
             )
-        if not line_values:
+
+        replacement_line_values = []
+        for rep in replacement_line_items:
+            replacement_line_values.append(
+                (
+                    0,
+                    0,
+                    {
+                        "replacement_product_id": rep.get("replacement_product_id") or False,
+                        "replacement_qty": rep.get("replacement_qty", 0),
+                        "replacement_unit_price": rep.get("replacement_unit_price", 0),
+                        "replacement_total": rep.get("replacement_total", 0),
+                    },
+                )
+            )
+
+        if not old_line_values and not replacement_line_values:
             return False
 
-        record = self.env["pos.exchange.record"].create(
-            {
-                "source_order_id": source_order.id,
-                "exchange_order_id": self.id,
-                "customer_id": self.partner_id.id or False,
-                "session_id": self.session_id.id,
-                "config_id": self.config_id.id,
-                "cashier_id": self.user_id.id or False,
-                "exchange_date": self.date_order,
-                "old_total": exchange_data.get("old_total", 0),
-                "replacement_total": exchange_data.get("replacement_total", 0),
-                "difference_amount": exchange_data.get("difference_amount", 0),
-                "state": "completed",
-                "line_ids": line_values,
-            }
-        )
+        vals = {
+            "source_order_id": source_order.id,
+            "exchange_order_id": self.id,
+            "customer_id": self.partner_id.id or False,
+            "session_id": self.session_id.id,
+            "config_id": self.config_id.id,
+            "cashier_id": self.user_id.id or False,
+            "exchange_date": self.date_order,
+            "old_total": exchange_data.get("old_total", 0),
+            "replacement_total": exchange_data.get("replacement_total", 0),
+            "difference_amount": exchange_data.get("difference_amount", 0),
+            "state": "completed",
+            "line_ids": old_line_values,
+        }
+
+        if "replacement_line_ids" in self.env["pos.exchange.record"]._fields:
+            vals["replacement_line_ids"] = replacement_line_values
+
+        record = self.env["pos.exchange.record"].create(vals)
         self.write({"exchange_record_id": record.id})
         return record

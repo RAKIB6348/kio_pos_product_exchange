@@ -77,8 +77,10 @@ export class ExchangeScreen extends TicketScreen {
                 exchangeOrder: order,
                 exchangeType: payload.exchangeChoice,
                 oldTotal: payload.totalExchangeValue,
+                originalExchangeTotal: payload.totalExchangeValue,
                 waitingForReplacement: payload.exchangeChoice !== "same_product",
                 replacementProduct: null,
+                replacementOrderlines: [],
             };
             if (payload.exchangeChoice === "same_product") {
                 for (const item of exchangeItems) {

@@ -1,0 +1,49 @@
+.pos-receipt {
+    .pos-receipt-exchange-header {
+        font-size: 0.95em;
+        line-height: 1.3;
+        margin: 4px 0;
+    }
+
+    .pos-receipt-separator {
+        overflow: hidden;
+        text-align: center;
+        white-space: nowrap;
+        margin: 3px 0;
+        letter-spacing: -1px;
+        color: #000;
+        font-family: monospace;
+    }
+
+    .pos-receipt-exchange-section {
+        margin: 4px 0;
+    }
+
+    .pos-receipt-exchange-section-title {
+        font-weight: 700;
+        font-size: 0.9em;
+        text-align: left;
+        margin-bottom: 2px;
+    }
+
+    .pos-receipt-exchange-line {
+        margin-bottom: 3px;
+        line-height: 1.2;
+
+        .pos-receipt-line-details {
+            font-size: 0.85em;
+            color: #333;
+        }
+    }
+
+    .pos-receipt-exchange-total-block {
+        margin-top: 4px;
+        line-height: 1.2;
+    }
+
+    .pos-receipt-exchange-lower-breakdown {
+        font-size: 0.9em;
+        margin: 4px 0;
+        line-height: 1.25;
+    }
+}

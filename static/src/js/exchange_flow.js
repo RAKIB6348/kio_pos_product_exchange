@@ -44,6 +44,9 @@ patch(PosStore.prototype, {
             noRefundExchange,
             waitingForReplacement: false,
         });
+        replacementLine.is_exchange_replacement = true;
+        replacementLine.order.is_exchange_order = true;
+        replacementLine.order.exchangeState = this.exchangeState;
         return this.exchangeState;
     },
 

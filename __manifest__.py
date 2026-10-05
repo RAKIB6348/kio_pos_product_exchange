@@ -38,6 +38,7 @@ Key Features:
             'kio_pos_product_exchange/static/src/js/closing_cash_denominations.js',
             'kio_pos_product_exchange/static/src/scss/exchange_screen.scss',
             'kio_pos_product_exchange/static/src/scss/closing_cash_denominations.scss',
+            'kio_pos_product_exchange/static/src/scss/pos_exchange_receipt.scss',
         ],
         'web.assets_backend': [
             'kio_pos_product_exchange/static/src/scss/exchange_record.scss',

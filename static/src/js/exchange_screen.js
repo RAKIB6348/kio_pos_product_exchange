@@ -92,6 +92,9 @@ export class ExchangeScreen extends TicketScreen {
                             merge: false,
                         }
                     );
+                    if (item.replacementOrderline) {
+                        item.replacementOrderline.is_exchange_replacement = true;
+                    }
                 }
                 exchangeState.replacementProduct = exchangeItems[0].replacementOrderline.product;
                 exchangeState.replacementOrderline = exchangeItems[0].replacementOrderline;
@@ -100,6 +103,11 @@ export class ExchangeScreen extends TicketScreen {
                 );
             }
             this.pos.exchangeState = exchangeState;
+            order.is_exchange_order = true;
+            order.exchangeState = exchangeState;
+            order.source_order_name = orderline.order.name;
+            order.source_order_id = orderline.order.backendId || orderline.order.server_id;
+            order.exchange_type = payload.exchangeChoice;
             if (payload.exchangeChoice === "same_product") {
                 order.autoValidateExchange = true;
                 this.pos.showScreen("PaymentScreen");

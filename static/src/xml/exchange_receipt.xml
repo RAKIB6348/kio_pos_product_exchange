@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="kio_pos_product_exchange.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
+        <!-- 1. Product Exchange Header & Ref Order -->
+        <xpath expr="//ReceiptHeader" position="after">
+            <t t-if="props.data.is_exchange_order">
+                <div class="pos-receipt-separator text-center">------------------------------------------</div>
+                <div class="pos-receipt-exchange-header text-center my-1">
+                    <div class="fw-bolder">*** PRODUCT EXCHANGE ***</div>
+                    <div t-if="props.data.source_order_ref" class="fw-bolder">
+                        Ref Order: <t t-esc="props.data.source_order_ref" />
+                    </div>
+                    <div t-if="props.data.customer_name" class="fw-bolder">
+                        Customer: <t t-esc="props.data.customer_name" />
+                    </div>
+                    <div t-if="props.data.exchange_ref" class="small">
+                        Exchange Ref: <t t-esc="props.data.exchange_ref" />
+                    </div>
+                </div>
+                <div class="pos-receipt-separator text-center">------------------------------------------</div>
+            </t>
+        </xpath>
+
+        <!-- 2. Product Lines: Hide standard OrderWidget for exchange orders -->
+        <xpath expr="//OrderWidget" position="attributes">
+            <attribute name="t-if">!props.data.is_exchange_order</attribute>
+        </xpath>
+
+        <!-- 3. Exchange Product Sections: RETURNED and REPLACEMENT -->
+        <xpath expr="//OrderWidget" position="after">
+            <t t-if="props.data.is_exchange_order">
+                <!-- Returned / Old Items -->
+                <div t-if="props.data.returned_lines and props.data.returned_lines.length" class="pos-receipt-exchange-section my-1">
+                    <div class="pos-receipt-exchange-section-title">▼ RETURNED / OLD ITEM</div>
+                    <t t-foreach="props.data.returned_lines" t-as="line" t-key="line_index">
+                        <div class="pos-receipt-exchange-line my-1 text-start">
+                            <div class="responsive-price fw-bolder">
+                                <span class="text-truncate pe-1 text-wrap" t-esc="line.productName"/>
+                                <span class="pos-receipt-right-align text-end text-nowrap" t-esc="line.price"/>
+                            </div>
+                            <div class="pos-receipt-line-details ms-2">
+                                <t t-esc="line.qty"/><t t-if="line.unit"> <t t-esc="line.unit"/></t>
+                                <t t-if="line.unitPrice">
+                                    x <t t-esc="line.unitPrice"/><t t-if="line.unit"> / <t t-esc="line.unit"/></t>
+                                </t>
+                                <t t-if="line.discount and line.discount !== '0'">
+                                    (Disc: <t t-esc="line.discount"/>%)
+                                </t>
+                            </div>
+                            <div t-if="line.customerNote" class="customer-note w-100 p-1 my-1 rounded text-break">
+                                <i class="fa fa-sticky-note me-1" role="img" aria-label="Customer Note" title="Customer Note"/>
+                                <t t-esc="line.customerNote" />
+                            </div>
+                            <ul t-if="line.pack_lot_lines" class="list-unstyled ms-2 mb-0 small">
+                                <li t-foreach="line.pack_lot_lines" t-as="lot" t-key="lot.cid">
+                                    <t t-if="lot.order_line.product.tracking == 'lot'">
+                                        Lot Number <t t-esc="lot.lot_name"/>
+                                    </t>
+                                    <t t-else="">
+                                        SN <t t-esc="lot.lot_name"/>
+                                    </t>
+                                </li>
+                            </ul>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="pos-receipt-separator text-center">------------------------------------------</div>
+
+                <!-- Replacement / New Items -->
+                <div t-if="props.data.replacement_lines and props.data.replacement_lines.length" class="pos-receipt-exchange-section my-1">
+                    <div class="pos-receipt-exchange-section-title">▲ REPLACEMENT / NEW ITEM</div>
+                    <t t-foreach="props.data.replacement_lines" t-as="line" t-key="line_index">
+                        <div class="pos-receipt-exchange-line my-1 text-start">
+                            <div class="responsive-price fw-bolder">
+                                <span class="text-truncate pe-1 text-wrap" t-esc="line.productName"/>
+                                <span class="pos-receipt-right-align text-end text-nowrap" t-esc="line.price"/>
+                            </div>
+                            <div class="pos-receipt-line-details ms-2">
+                                <t t-esc="line.qty"/><t t-if="line.unit"> <t t-esc="line.unit"/></t>
+                                <t t-if="line.unitPrice">
+                                    x <t t-esc="line.unitPrice"/><t t-if="line.unit"> / <t t-esc="line.unit"/></t>
+                                </t>
+                                <t t-if="line.discount and line.discount !== '0'">
+                                    (Disc: <t t-esc="line.discount"/>%)
+                                </t>
+                            </div>
+                            <div t-if="line.customerNote" class="customer-note w-100 p-1 my-1 rounded text-break">
+                                <i class="fa fa-sticky-note me-1" role="img" aria-label="Customer Note" title="Customer Note"/>
+                                <t t-esc="line.customerNote" />
+                            </div>
+                            <ul t-if="line.pack_lot_lines" class="list-unstyled ms-2 mb-0 small">
+                                <li t-foreach="line.pack_lot_lines" t-as="lot" t-key="lot.cid">
+                                    <t t-if="lot.order_line.product.tracking == 'lot'">
+                                        Lot Number <t t-esc="lot.lot_name"/>
+                                    </t>
+                                    <t t-else="">
+                                        SN <t t-esc="lot.lot_name"/>
+                                    </t>
+                                </li>
+                            </ul>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="pos-receipt-separator text-center">------------------------------------------</div>
+            </t>
+        </xpath>
+
+        <!-- 4. Hide standard dashes separator for exchange order -->
+        <xpath expr="//div[hasclass('pos-receipt-right-align') and contains(text(), '--------')]" position="attributes">
+            <attribute name="t-if">!props.data.is_exchange_order</attribute>
+        </xpath>
+
+        <!-- 5. Hide standard total for exchange order -->
+        <xpath expr="//div[hasclass('pos-receipt')]/div[hasclass('pos-receipt-amount') and not(hasclass('receipt-change'))]" position="attributes">
+            <attribute name="t-if">!props.data.is_exchange_order</attribute>
+        </xpath>
+
+        <!-- 6. Exchange Total / Net Difference to Pay -->
+        <xpath expr="//div[hasclass('pos-receipt')]/div[hasclass('pos-receipt-amount') and not(hasclass('receipt-change'))]" position="after">
+            <t t-if="props.data.is_exchange_order">
+                <!-- Breakdown for Lower-Value Exchange -->
+                <div t-if="props.data.is_lower_value_exchange" class="pos-receipt-exchange-lower-breakdown my-1 text-start">
+                    <div class="responsive-price">
+                        <span>Returned Product Value</span>
+                        <span class="pos-receipt-right-align text-end" t-esc="props.formatCurrency(props.data.exchange_old_total)"/>
+                    </div>
+                    <div class="responsive-price">
+                        <span>Replacement Product Value</span>
+                        <span class="pos-receipt-right-align text-end" t-esc="props.formatCurrency(props.data.exchange_replacement_total)"/>
+                    </div>
+                    <div class="responsive-price fw-bolder">
+                        <span>Customer Payable</span>
+                        <span class="pos-receipt-right-align text-end" t-esc="props.formatCurrency(0)"/>
+                    </div>
+                </div>
+
+                <!-- Authoritative Net Difference to Pay -->
+                <div class="pos-receipt-exchange-total-block my-1 text-start">
+                    <div class="small fw-normal">(Net Difference to Pay)</div>
+                    <div class="pos-receipt-amount">
+                        TOTAL
+                        <span class="pos-receipt-right-align text-end" t-esc="props.formatCurrency(props.data.exchange_payable_amount)"/>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+
+        <!-- 7. Hide standard rounding when it is an exchange order -->
+        <xpath expr="//t[@t-if='props.data.rounding_applied']" position="attributes">
+            <attribute name="t-if">props.data.rounding_applied and !props.data.is_exchange_order</attribute>
+        </xpath>
+    </t>
+
+</templates>

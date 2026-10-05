@@ -65,6 +65,7 @@
                 <div class="exchange-product-list">
                     <div class="exchange-product-header">
                         <span class="exchange-col-product">Product</span>
+                        <span class="exchange-col-barcode">Barcode</span>
                         <span class="exchange-col-purchased-qty">Purchased Qty</span>
                         <span class="exchange-col-exchange-qty">Exchange Qty</span>
                     </div>
@@ -77,6 +78,7 @@
                             t-on-click="() => this.onLineClick(line)">
                             <i t-attf-class="fa {{ isLineSelected(line) ? 'fa-check-square-o' : 'fa-square-o' }}"/>
                             <span class="exchange-col-product" t-esc="line.getDisplayData().productName" />
+                            <span class="exchange-col-barcode" t-esc="getBarcode(line)" t-att-title="getBarcode(line)" />
                             <span class="exchange-col-purchased-qty" t-esc="line.getDisplayData().qty"/>
                             <span class="exchange-col-exchange-qty" t-on-click.stop="() => {}">
                                 <input type="number"

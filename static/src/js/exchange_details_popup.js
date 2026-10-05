@@ -67,6 +67,10 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
         this.state.confirmed = false;
     }
 
+    getBarcode(line) {
+        return line.product?.barcode || "-";
+    }
+
     getExchangeQty(line) {
         return this.state.exchangeQuantities[line.id] ?? "";
     }

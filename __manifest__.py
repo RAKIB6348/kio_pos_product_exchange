@@ -39,6 +39,9 @@ Key Features:
             'kio_pos_product_exchange/static/src/scss/exchange_screen.scss',
             'kio_pos_product_exchange/static/src/scss/closing_cash_denominations.scss',
         ],
+        'web.assets_backend': [
+            'kio_pos_product_exchange/static/src/scss/exchange_record.scss',
+        ],
     },
     'installable': True,
     'application': False,

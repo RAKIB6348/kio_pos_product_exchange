@@ -59,7 +59,7 @@ patch(Order.prototype, {
         const oldTotal =
             state.originalExchangeTotal ??
             exchangeItems.reduce(
-                (total, item) => total + Math.abs(item.sourceOrderline.get_price_with_tax()),
+                (total, item) => total + Math.abs(item.returnLine.get_price_with_tax()),
                 0
             );
         const replacementLines =
@@ -79,7 +79,7 @@ patch(Order.prototype, {
                 ? 0
                 : state.payableDifference ?? Math.max(0, replacementTotal - oldTotal);
         const lines = exchangeItems.map((item, index) => {
-            const itemOldTotal = Math.abs(item.sourceOrderline.get_price_with_tax());
+            const itemOldTotal = Math.abs(item.returnLine.get_price_with_tax());
             const itemReplacementLine =
                 state.exchangeType === "same_product"
                     ? item.replacementOrderline
@@ -98,11 +98,7 @@ patch(Order.prototype, {
                     state.exchangeType === "same_product"
                         ? item.sourceOrderline.product.id
                         : item.returnLine.product.id,
-                old_qty: Math.abs(
-                    state.exchangeType === "same_product"
-                        ? item.sourceOrderline.get_quantity()
-                        : item.returnLine.get_quantity()
-                ),
+                old_qty: Math.abs(item.returnLine.get_quantity()),
                 old_unit_price:
                     state.exchangeType === "same_product"
                         ? item.sourceOrderline.get_unit_price()

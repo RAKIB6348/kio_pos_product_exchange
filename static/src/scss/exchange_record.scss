@@ -1,0 +1,5 @@
+.exchange-detail-lines {
+    .o_list_renderer tbody > tr:has(td:only-child) {
+        display: none;
+    }
+}

@@ -78,11 +78,19 @@ class PosExchangeRecordLine(models.Model):
         "pos.order.line", string="Original Order Line", readonly=True, index=True
     )
     old_product_id = fields.Many2one("product.product", string="Old Product", readonly=True, index=True)
+    old_product_barcode = fields.Char(
+        string="Old Product Barcode", related="old_product_id.barcode", readonly=True
+    )
     old_qty = fields.Float(string="Old Quantity", readonly=True)
     old_unit_price = fields.Monetary(string="Old Unit Price", readonly=True, currency_field="currency_id")
     old_total = fields.Monetary(string="Old Total", readonly=True, currency_field="currency_id")
     replacement_product_id = fields.Many2one(
         "product.product", string="Replacement Product", readonly=True, index=True
+    )
+    replacement_product_barcode = fields.Char(
+        string="Replacement Product Barcode",
+        related="replacement_product_id.barcode",
+        readonly=True,
     )
     replacement_qty = fields.Float(string="Replacement Quantity", readonly=True)
     replacement_unit_price = fields.Monetary(

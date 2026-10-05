@@ -91,7 +91,11 @@ export class ExchangeDetailsPopup extends AbstractAwaitablePopup {
 
     getTotalExchangeValue() {
         return this.selectedLines.reduce(
-            (total, line) => total + Math.abs(line.get_price_with_tax()),
+            (total, line) =>
+                total +
+                Math.abs(
+                    line.get_all_prices(Number(this.getExchangeQty(line))).priceWithTax
+                ),
             0
         );
     }

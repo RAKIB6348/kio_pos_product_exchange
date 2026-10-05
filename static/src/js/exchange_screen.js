@@ -85,7 +85,7 @@ export class ExchangeScreen extends TicketScreen {
                     item.replacementOrderline = await order.add_product(
                         item.sourceOrderline.product,
                         {
-                            quantity: item.sourceOrderline.get_quantity(),
+                            quantity: payload.exchangeQuantities[item.sourceOrderline.id],
                             price: item.sourceOrderline.get_unit_price(),
                             discount: item.sourceOrderline.get_discount(),
                             tax_ids: item.sourceOrderline.get_taxes().map((tax) => tax.id),

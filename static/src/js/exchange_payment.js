@@ -36,7 +36,7 @@ patch(PaymentScreen.prototype, {
     async validateOrder() {
         if (
             this.currentOrder?.exchangeState?.exchangeType === "new_product" &&
-            !this.pos.validateExchangeBeforePayment(this.currentOrder)
+            !(await this.pos.validateExchangeBeforePayment(this.currentOrder))
         ) {
             return;
         }

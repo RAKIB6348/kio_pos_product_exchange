@@ -36,6 +36,12 @@ class PosExchangeRecord(models.Model):
     replacement_total = fields.Monetary(
         string="Replacement Total", readonly=True, currency_field="currency_id"
     )
+    adjustment_total = fields.Monetary(
+        string="Forfeited Adjustment", readonly=True, currency_field="currency_id"
+    )
+    customer_payable = fields.Monetary(
+        string="Customer Payable", readonly=True, currency_field="currency_id"
+    )
     difference_amount = fields.Monetary(
         string="Difference", readonly=True, currency_field="currency_id"
     )
@@ -144,4 +150,3 @@ class PosExchangeRecordReplacementLine(models.Model):
     currency_id = fields.Many2one(
         "res.currency", related="exchange_id.currency_id", store=True, readonly=True
     )
-

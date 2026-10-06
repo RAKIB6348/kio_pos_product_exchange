@@ -11,6 +11,8 @@
                 <field name="customer_id"/>
                 <field name="old_total" widget="monetary"/>
                 <field name="replacement_total" widget="monetary"/>
+                <field name="adjustment_total" widget="monetary"/>
+                <field name="customer_payable" widget="monetary"/>
                 <field name="difference_amount" widget="monetary"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="cashier_id"/>
@@ -77,6 +79,8 @@
                             <field name="currency_id" invisible="1"/>
                             <field name="old_total" string="Old Product Total" widget="monetary"/>
                             <field name="replacement_total" string="Exchange Product Total" widget="monetary"/>
+                            <field name="adjustment_total" string="Forfeited Adjustment" widget="monetary"/>
+                            <field name="customer_payable" string="Customer Payable" widget="monetary"/>
                             <label for="difference_amount" string="Difference" class="oe_subtotal_footer_separator"/>
                             <field name="difference_amount" nolabel="1" class="oe_subtotal_footer_separator" widget="monetary"/>
                         </group>

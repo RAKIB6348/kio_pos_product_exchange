@@ -23,6 +23,7 @@ Key Features:
     'data': [
         'security/ir.model.access.csv',
         'data/pos_exchange_sequence.xml',
+        'data/pos_exchange_adjustment_product.xml',
         'views/menu_views.xml',
     ],
     'demo': [],

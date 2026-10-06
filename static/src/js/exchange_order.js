@@ -9,7 +9,7 @@ patch(Order.prototype, {
     async pay() {
         if (
             this.exchangeState?.exchangeType === "new_product" &&
-            !this.pos.validateExchangeBeforePayment(this)
+            !(await this.pos.validateExchangeBeforePayment(this))
         ) {
             return;
         }
@@ -49,29 +49,43 @@ patch(Order.prototype, {
 
     async add_product(product, options) {
         const line = await super.add_product(product, options);
+        if (line && options?.is_exchange_adjustment) {
+            line.is_exchange_adjustment = true;
+            line.is_exchange_replacement = false;
+        }
         if (
             (this.is_exchange_order || this.pos?.exchangeState?.exchangeOrder === this) &&
             line &&
+            !line.is_exchange_adjustment &&
             !line.is_exchange_return &&
             line.get_quantity() > 0
         ) {
             line.is_exchange_replacement = true;
             this.pos.updateExchangeState(this);
+            await this.pos.requestExchangeAdjustmentSync(this);
         }
         return line;
     },
 
     removeOrderline(line) {
+        const wasExchangeLine = Boolean(
+            this.is_exchange_order || this.pos?.exchangeState?.exchangeOrder === this
+        );
         const res = super.removeOrderline(...arguments);
-        if (this.is_exchange_order || this.pos?.exchangeState?.exchangeOrder === this) {
+        if (wasExchangeLine) {
             this.pos.updateExchangeState(this);
+            if (!this.syncingExchangeAdjustment) {
+                this.pos.requestExchangeAdjustmentSync(this);
+            }
         }
         return res;
     },
 
     export_as_JSON() {
         const json = super.export_as_JSON(...arguments);
-        const state = this.pos?.exchangeState || this.exchangeState;
+        const state =
+            this.exchangeState ||
+            (this.pos?.exchangeState?.exchangeOrder === this ? this.pos.exchangeState : null);
         const sourceOrder = state?.sourceOrder;
         const exchangeItems = state?.exchangeItems?.length
             ? state.exchangeItems
@@ -87,12 +101,16 @@ patch(Order.prototype, {
         const sourceLine = exchangeItems[0]?.sourceOrderline;
         const allLines = this.get_orderlines();
         const returnLines = exchangeItems.map((item) => item.returnLine);
+        const adjustmentLines = allLines.filter((line) =>
+            this.pos?.isExchangeAdjustmentLine?.(line)
+        );
         const replacementLines =
             state?.exchangeType === "same_product"
                 ? exchangeItems.map((item) => item.replacementOrderline).filter(Boolean)
                 : allLines.filter(
                       (line) =>
                           !returnLines.includes(line) &&
+                          !this.pos?.isExchangeAdjustmentLine?.(line) &&
                           (line.is_exchange_replacement || line.get_quantity() > 0)
                   );
 
@@ -126,6 +144,9 @@ patch(Order.prototype, {
         const payableDifference =
             this.pos.getExchangeTotals(this)?.customerPayable ??
             (state.exchangeType === "same_product" ? 0 : Math.max(0, rawDifference));
+        const adjustmentTotal =
+            this.pos.getExchangeTotals(this)?.adjustmentTotal ??
+            adjustmentLines.reduce((total, line) => total + line.get_price_with_tax(), 0);
 
         const oldLines = exchangeItems.map((item) => ({
             original_order_line_id: item.sourceOrderline.id,
@@ -146,6 +167,13 @@ patch(Order.prototype, {
             replacement_qty: line.get_quantity(),
             replacement_unit_price: line.get_unit_price(),
             replacement_total: line.get_price_with_tax(),
+        }));
+
+        const adjustmentLinesData = adjustmentLines.map((line) => ({
+            adjustment_product_id: line.product.id,
+            adjustment_qty: line.get_quantity(),
+            adjustment_unit_price: line.get_unit_price(),
+            adjustment_total: line.get_price_with_tax(),
         }));
 
         const legacyLines = oldLines.map((item, index) => {
@@ -175,9 +203,13 @@ patch(Order.prototype, {
             source_order_line_id: sourceLine.id,
             old_total: oldTotal,
             replacement_total: replacementTotal,
-            difference_amount: payableDifference,
+            adjustment_total: adjustmentTotal,
+            forfeited_amount: adjustmentTotal,
+            customer_payable: payableDifference,
+            difference_amount: rawDifference,
             old_lines: oldLines,
             replacement_lines: replacementLinesData,
+            adjustment_lines: adjustmentLinesData,
             lines: legacyLines,
             customer_name:
                 (typeof this.get_partner_name === "function" ? this.get_partner_name() : "") ||
@@ -209,13 +241,19 @@ patch(Order.prototype, {
             (this.pos?.exchangeState?.exchangeOrder === this ? this.pos.exchangeState : null);
         const exchangeData = this.exchange_data;
         const allLines = this.get_orderlines();
+        const adjustmentLines = allLines.filter((line) =>
+            this.pos?.isExchangeAdjustmentLine?.(line)
+        );
         const returnLines = allLines.filter(
-            (line) => line.is_exchange_return || line.get_quantity() < 0
+            (line) =>
+                !this.pos?.isExchangeAdjustmentLine?.(line) &&
+                (line.is_exchange_return || line.get_quantity() < 0)
         );
         const replacementLines = allLines.filter(
             (line) =>
-                line.is_exchange_replacement ||
-                (!line.is_exchange_return && line.get_quantity() > 0)
+                !this.pos?.isExchangeAdjustmentLine?.(line) &&
+                (line.is_exchange_replacement ||
+                    (!line.is_exchange_return && line.get_quantity() > 0))
         );
 
         const isExchange = Boolean(
@@ -259,6 +297,10 @@ patch(Order.prototype, {
             ...line.getDisplayData(),
             is_replacement: true,
         }));
+        result.adjustment_lines = adjustmentLines.map((line) => ({
+            ...line.getDisplayData(),
+            is_adjustment: true,
+        }));
 
         const exchangeTotals = this.pos?.getExchangeTotals?.(this);
         const oldTotal =
@@ -280,7 +322,7 @@ patch(Order.prototype, {
             exchangeTotals?.customerPayable ??
             (state?.exchangeType === "same_product"
                 ? 0
-                : exchangeData?.difference_amount ??
+                : exchangeData?.customer_payable ??
                   state?.payableDifference ??
                   (this.pos?.getExchangePayableAmount
                       ? this.pos.getExchangePayableAmount(this)
@@ -290,6 +332,10 @@ patch(Order.prototype, {
             state?.exchangeType || (rawDifference === 0 ? "same_product" : "new_product");
         result.exchange_old_total = oldTotal;
         result.exchange_replacement_total = replacementTotal;
+        result.exchange_adjustment_total =
+            exchangeTotals?.adjustmentTotal ??
+            exchangeData?.adjustment_total ??
+            adjustmentLines.reduce((sum, line) => sum + line.get_price_with_tax(), 0);
         result.exchange_raw_difference = rawDifference;
         result.exchange_payable_amount = payableDifference;
         result.is_lower_value_exchange =
@@ -300,14 +346,27 @@ patch(Order.prototype, {
 });
 
 patch(Orderline.prototype, {
+    export_as_JSON() {
+        const json = super.export_as_JSON(...arguments);
+        json.is_exchange_adjustment = Boolean(this.is_exchange_adjustment);
+        return json;
+    },
+    init_from_JSON(json) {
+        super.init_from_JSON(...arguments);
+        this.is_exchange_adjustment = Boolean(json.is_exchange_adjustment);
+    },
     set_quantity(quantity, keep_price) {
         const res = super.set_quantity(...arguments);
         if (
             this.order &&
+            this.order.get_orderlines().includes(this) &&
             (this.order.is_exchange_order ||
                 this.order.pos?.exchangeState?.exchangeOrder === this.order)
         ) {
             this.order.pos?.updateExchangeState?.(this.order);
+            if (!this.order.syncingExchangeAdjustment) {
+                this.order.pos?.requestExchangeAdjustmentSync?.(this.order);
+            }
         }
         return res;
     },
@@ -315,10 +374,14 @@ patch(Orderline.prototype, {
         const res = super.set_unit_price(...arguments);
         if (
             this.order &&
+            this.order.get_orderlines().includes(this) &&
             (this.order.is_exchange_order ||
                 this.order.pos?.exchangeState?.exchangeOrder === this.order)
         ) {
             this.order.pos?.updateExchangeState?.(this.order);
+            if (!this.order.syncingExchangeAdjustment) {
+                this.order.pos?.requestExchangeAdjustmentSync?.(this.order);
+            }
         }
         return res;
     },
@@ -326,10 +389,14 @@ patch(Orderline.prototype, {
         const res = super.set_discount(...arguments);
         if (
             this.order &&
+            this.order.get_orderlines().includes(this) &&
             (this.order.is_exchange_order ||
                 this.order.pos?.exchangeState?.exchangeOrder === this.order)
         ) {
             this.order.pos?.updateExchangeState?.(this.order);
+            if (!this.order.syncingExchangeAdjustment) {
+                this.order.pos?.requestExchangeAdjustmentSync?.(this.order);
+            }
         }
         return res;
     },

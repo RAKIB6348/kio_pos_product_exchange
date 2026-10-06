@@ -104,6 +104,24 @@
                     </t>
                 </div>
 
+                <!-- Forfeited balance / adjustment income -->
+                <div t-if="props.data.adjustment_lines and props.data.adjustment_lines.length" class="pos-receipt-exchange-section my-1">
+                    <div class="pos-receipt-exchange-section-title">◆ EXCHANGE ADJUSTMENT</div>
+                    <t t-foreach="props.data.adjustment_lines" t-as="line" t-key="line_index">
+                        <div class="pos-receipt-exchange-line my-1 text-start">
+                            <div class="responsive-price fw-bolder">
+                                <span class="text-truncate pe-1 text-wrap" t-esc="line.productName"/>
+                                <span class="pos-receipt-right-align text-end text-nowrap" t-esc="line.price"/>
+                            </div>
+                            <div class="pos-receipt-line-details ms-2">
+                                <t t-esc="line.qty"/>
+                                <t t-if="line.unit"> <t t-esc="line.unit"/></t>
+                                <t t-if="line.unitPrice"> x <t t-esc="line.unitPrice"/></t>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
                 <div class="pos-receipt-separator text-center">------------------------------------------</div>
             </t>
         </xpath>

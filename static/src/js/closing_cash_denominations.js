@@ -45,7 +45,7 @@ patch(ClosePosPopup.prototype, {
     },
 
     updateCashCountedFromDenominations() {
-        if (!this.pos.config.cash_control) {
+        if (!this.pos.config.show_cash_denominations) {
             return;
         }
         const counted = this.env.utils.formatCurrency(this.getDenominationTotalAmount(), false);

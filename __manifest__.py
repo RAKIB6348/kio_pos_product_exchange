@@ -26,6 +26,7 @@ Key Features:
         'data/pos_exchange_sequence.xml',
         'data/pos_exchange_adjustment_product.xml',
         'views/menu_views.xml',
+        'views/pos_config_views.xml',
     ],
     'demo': [],
     'assets': {

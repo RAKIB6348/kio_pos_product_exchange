@@ -164,5 +164,6 @@
         name="Exchange Records"
         parent="point_of_sale.menu_point_root"
         action="action_pos_exchange_record"
+        groups="kio_branch_inventory.group_branch_inventory_user"
         sequence="20"/>
 </odoo>

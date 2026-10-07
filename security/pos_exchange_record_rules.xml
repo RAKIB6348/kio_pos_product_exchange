@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!--
+            POS Exchange Record branch visibility.
+
+            Branch Inventory User:
+                - Must see exchange records for their assigned branch warehouse
+                  and source location, within their allowed companies.
+                - Must NOT see exchange records from other branches.
+                - Fails closed: no warehouse/location assignment -> no records.
+
+            Branch Inventory Admin / System Administrator:
+                - Bypass branch warehouse/location filtering.
+                - Company isolation is still enforced.
+
+            Branch Inventory Admin implies Branch Inventory User, so the inline
+            admin/system bypass is evaluated first and the restrictive branch
+            domain never continues to restrict the Admin.
+        -->
+
+        <record id="rule_pos_exchange_record_branch_inventory_user" model="ir.rule">
+            <field name="name">Branch Inventory User: Assigned Branch Exchange Records Only</field>
+            <field name="model_id" ref="model_pos_exchange_record"/>
+            <field name="groups" eval="[(4, ref('kio_branch_inventory.group_branch_inventory_user'))]"/>
+            <field name="domain_force">
+                (
+                    [("exchange_order_id.company_id", "in", company_ids)]
+                    if (
+                        user.has_group('kio_branch_inventory.group_branch_inventory_admin')
+                        or user.has_group('base.group_system')
+                    )
+                    else (
+                        [
+                            ("exchange_order_id.company_id", "in", company_ids),
+                            ("config_id.picking_type_id.warehouse_id", "in", user.branch_inventory_warehouse_ids.ids),
+                            ("config_id.picking_type_id.default_location_src_id", "child_of", user.branch_inventory_location_ids.ids),
+                        ]
+                        if (user.branch_inventory_warehouse_ids and user.branch_inventory_location_ids)
+                        else [('id', '=', 0)]
+                    )
+                )
+            </field>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+        </record>
+
+        <!--
+            Exchange record lines inherit the same branch visibility as their
+            parent exchange record, resolved through exchange_id.
+        -->
+        <record id="rule_pos_exchange_record_line_branch_inventory_user" model="ir.rule">
+            <field name="name">Branch Inventory User: Assigned Branch Exchange Record Lines Only</field>
+            <field name="model_id" ref="model_pos_exchange_record_line"/>
+            <field name="groups" eval="[(4, ref('kio_branch_inventory.group_branch_inventory_user'))]"/>
+            <field name="domain_force">
+                (
+                    [("exchange_id.exchange_order_id.company_id", "in", company_ids)]
+                    if (
+                        user.has_group('kio_branch_inventory.group_branch_inventory_admin')
+                        or user.has_group('base.group_system')
+                    )
+                    else (
+                        [
+                            ("exchange_id.exchange_order_id.company_id", "in", company_ids),
+                            ("exchange_id.config_id.picking_type_id.warehouse_id", "in", user.branch_inventory_warehouse_ids.ids),
+                            ("exchange_id.config_id.picking_type_id.default_location_src_id", "child_of", user.branch_inventory_location_ids.ids),
+                        ]
+                        if (user.branch_inventory_warehouse_ids and user.branch_inventory_location_ids)
+                        else [('id', '=', 0)]
+                    )
+                )
+            </field>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+        </record>
+
+        <!--
+            Exchange record replacement lines inherit the same branch visibility
+            as their parent exchange record, resolved through exchange_id.
+        -->
+        <record id="rule_pos_exchange_record_replacement_line_branch_inventory_user" model="ir.rule">
+            <field name="name">Branch Inventory User: Assigned Branch Exchange Replacement Lines Only</field>
+            <field name="model_id" ref="model_pos_exchange_record_replacement_line"/>
+            <field name="groups" eval="[(4, ref('kio_branch_inventory.group_branch_inventory_user'))]"/>
+            <field name="domain_force">
+                (
+                    [("exchange_id.exchange_order_id.company_id", "in", company_ids)]
+                    if (
+                        user.has_group('kio_branch_inventory.group_branch_inventory_admin')
+                        or user.has_group('base.group_system')
+                    )
+                    else (
+                        [
+                            ("exchange_id.exchange_order_id.company_id", "in", company_ids),
+                            ("exchange_id.config_id.picking_type_id.warehouse_id", "in", user.branch_inventory_warehouse_ids.ids),
+                            ("exchange_id.config_id.picking_type_id.default_location_src_id", "child_of", user.branch_inventory_location_ids.ids),
+                        ]
+                        if (user.branch_inventory_warehouse_ids and user.branch_inventory_location_ids)
+                        else [('id', '=', 0)]
+                    )
+                )
+            </field>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+        </record>
+
+    </data>
+</odoo>

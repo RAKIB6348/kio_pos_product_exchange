@@ -19,9 +19,10 @@ Key Features:
     'category': 'Point of Sale',
     'version': '17.0.1.0.0',
     'license': 'LGPL-3',
-    'depends': ['point_of_sale'],
+    'depends': ['point_of_sale', 'kio_branch_inventory'],
     'data': [
         'security/ir.model.access.csv',
+        'security/pos_exchange_record_rules.xml',
         'data/pos_exchange_sequence.xml',
         'data/pos_exchange_adjustment_product.xml',
         'views/menu_views.xml',

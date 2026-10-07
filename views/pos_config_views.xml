@@ -3,14 +3,29 @@
     <record id="pos_config_view_form_inherit_kio_pos_product_exchange" model="ir.ui.view">
         <field name="name">pos.config.form.view.inherit.kio_pos_product_exchange</field>
         <field name="model">pos.config</field>
-        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form" />
         <field name="arch" type="xml">
             <xpath expr="//setting[@id='other_devices']" position="after">
                 <setting string="Show Cash Denominations on Closing"
-                         help="Display the cash denomination details table in the Close Session popup.">
-                    <field name="show_cash_denominations"/>
+                    help="Display the cash denomination details table in the Close Session popup.">
+                    <field name="show_cash_denominations" />
                 </setting>
             </xpath>
         </field>
     </record>
+
+    <!-- Show Cash Denominations toggle in Point of Sale list view -->
+    <record id="pos_config_view_tree_inherit_kio_pos_product_exchange" model="ir.ui.view">
+        <field name="name">pos.config.tree.view.inherit.kio_pos_product_exchange</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_config_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="show_cash_denominations"
+                    string="Cash Denominations"
+                    widget="boolean_toggle" />
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

@@ -2,6 +2,8 @@
 
 import { patch } from "@web/core/utils/patch";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+import { _t } from "@web/core/l10n/translation";
 
 const EXCHANGE_ADJUSTMENT_CODE = "POS_EXCHANGE_ADJUSTMENT";
 
@@ -108,7 +110,17 @@ patch(PosStore.prototype, {
                     "get_exchange_adjustment_product",
                     [this.pos_session.id]
                 );
-                return this.getProductById(productId);
+                const product = await this.getProductById(productId);
+                if (!product) {
+                    await this.env.services.popup.add(ErrorPopup, {
+                        title: _t("Exchange Adjustment Product Unavailable"),
+                        body: _t(
+                            "The Exchange Adjustment Fee product could not be loaded in this Point of Sale. Please check the product configuration and reopen the POS session."
+                        ),
+                    });
+                    return null;
+                }
+                return product;
             })();
         }
         try {
@@ -262,6 +274,9 @@ patch(PosStore.prototype, {
             let line = adjustmentLine;
             if (!line) {
                 const product = await this.getExchangeAdjustmentProduct();
+                if (!product) {
+                    return null;
+                }
                 line = await targetOrder.add_product(product, {
                     quantity: 1,
                     price: pricing.unitPrice,
@@ -270,6 +285,9 @@ patch(PosStore.prototype, {
                     merge: false,
                     is_exchange_adjustment: true,
                 });
+                if (!line) {
+                    return null;
+                }
             }
 
             line.is_exchange_adjustment = true;

@@ -46,7 +46,10 @@ class PosOrder(models.Model):
     @api.model
     def _ensure_exchange_adjustment_product(self):
         product = self._find_exchange_adjustment_product()
-        template_values = {
+        if product:
+            return product
+
+        creation_values = {
             "name": EXCHANGE_ADJUSTMENT_NAME,
             "default_code": EXCHANGE_ADJUSTMENT_CODE,
             "detailed_type": "service",
@@ -58,13 +61,10 @@ class PosOrder(models.Model):
             "active": True,
             "taxes_id": [(6, 0, [])],
         }
-        if product:
-            product.product_tmpl_id.sudo().write(template_values)
-            return product
         return (
             self.env["product.template"]
             .sudo()
-            .create(template_values)
+            .create(creation_values)
             .product_variant_id
         )
 

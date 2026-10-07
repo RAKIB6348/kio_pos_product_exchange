@@ -114,7 +114,10 @@ export class ExchangeScreen extends TicketScreen {
                 order.autoValidateExchange = true;
                 this.pos.showScreen("PaymentScreen");
             } else {
-                await this.pos.getExchangeAdjustmentProduct();
+                const adjustmentProduct = await this.pos.getExchangeAdjustmentProduct();
+                if (!adjustmentProduct) {
+                    return;
+                }
                 this.pos.showScreen("ProductScreen");
             }
         }

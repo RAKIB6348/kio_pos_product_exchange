@@ -41,7 +41,8 @@ patch(Order.prototype, {
                     return;
                 }
             }
-            await this.pos.finalizeZeroPayExchange(this);
+            this.autoValidateExchange = true;
+            this.pos.showScreen("PaymentScreen");
             return;
         }
         return super.pay(...arguments);

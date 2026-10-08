@@ -128,8 +128,8 @@
     <menuitem
         id="menu_pos_cash_denomination"
         name="Cash Denomination"
-        parent="point_of_sale.menu_point_rep"
+        parent="point_of_sale.menu_point_root"
         action="action_pos_cash_denomination"
         groups="point_of_sale.group_pos_user"
-        sequence="10"/>
+        sequence="50"/>
 </odoo>

@@ -48,8 +48,18 @@ patch(ClosePosPopup.prototype, {
         if (!this.pos.config.show_cash_denominations) {
             return;
         }
-        const counted = this.env.utils.formatCurrency(this.getDenominationTotalAmount(), false);
-        this.setManualCashInput(counted);
-        this.state.payments[this.props.default_cash_details.id].counted = counted;
+
+        const totalAmount = this.getDenominationTotalAmount();
+
+        // ১. ওডুর ডিফল্ট মেথডে ফ্লোট ভ্যালু পাঠানো
+        if (typeof this.setManualCashInput === "function") {
+            this.setManualCashInput(totalAmount);
+        }
+
+        // ২. ক্র্যাশ এড়াতে সেফটি চেক (optional chaining) দিয়ে স্টেট আপডেট
+        const cashId = this.props.default_cash_details?.id;
+        if (cashId && this.state.payments && this.state.payments[cashId]) {
+            this.state.payments[cashId].counted = totalAmount;
+        }
     },
 });

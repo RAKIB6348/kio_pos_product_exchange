@@ -4,3 +4,4 @@ from . import pos_config
 from . import pos_exchange_record
 from . import pos_order
 from . import pos_session
+from . import pos_cash_denomination

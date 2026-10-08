@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Cash Denomination Header Model View ===== -->
+    <record id="view_pos_cash_denomination_tree" model="ir.ui.view">
+        <field name="name">pos.cash.denomination.tree</field>
+        <field name="model">pos.cash.denomination</field>
+        <field name="arch" type="xml">
+            <tree string="Cash Denomination Records" create="0" edit="0" delete="0">
+                <field name="pos_session_id"/>
+                <field name="pos_config_id"/>
+                <field name="user_id"/>
+                <field name="closing_date"/>
+                <field name="total_notes" widget="monetary"/>
+                <field name="total_amount" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_cash_denomination_form" model="ir.ui.view">
+        <field name="name">pos.cash.denomination.form</field>
+        <field name="model">pos.cash.denomination</field>
+        <field name="arch" type="xml">
+            <form string="Cash Denomination Record" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group string="General Information">
+                            <field name="name"/>
+                            <field name="pos_session_id" readonly="1"/>
+                            <field name="pos_config_id" readonly="1"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="closing_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Denomination Details">
+                            <field name="line_ids" nolabel="1" readonly="1">
+                                <tree create="0" edit="0" delete="0">
+                                    <field name="denomination" string="Denomination"/>
+                                    <field name="note_qty" string="Note Qty"/>
+                                    <field name="amount" string="Amount" widget="monetary"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_footer">
+                    <sheet>
+                        <group colspan="4" name="exchange_total">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="total_notes" string="Total Notes" widget="monetary"/>
+                            <field name="total_amount" string="Total Amount" widget="monetary"/>
+                        </group>
+                    </sheet>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== Cash Denomination Line Model View ===== -->
+    <record id="view_pos_cash_denomination_line_tree" model="ir.ui.view">
+        <field name="name">pos.cash.denomination.line.tree</field>
+        <field name="model">pos.cash.denomination.line</field>
+        <field name="arch" type="xml">
+            <tree string="Denomination Lines" create="0" edit="0" delete="0">
+                <field name="denomination" string="Denomination"/>
+                <field name="note_qty" string="Note Qty"/>
+                <field name="amount" string="Amount" widget="monetary"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_cash_denomination_line_form" model="ir.ui.view">
+        <field name="name">pos.cash.denomination.line.form</field>
+        <field name="model">pos.cash.denomination.line</field>
+        <field name="arch" type="xml">
+            <form string="Cash Denomination Line" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="denomination" string="Denomination"/>
+                        <field name="note_qty" string="Note Qty"/>
+                        <field name="amount" string="Amount" widget="monetary"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== Cash Denomination Backend Menu ===== -->
+    <record id="view_pos_cash_denomination_search" model="ir.ui.view">
+        <field name="name">pos.cash.denomination.search</field>
+        <field name="model">pos.cash.denomination</field>
+        <field name="arch" type="xml">
+            <search string="Cash Denomination Records">
+
+                <field name="pos_session_id"/>
+                <field name="pos_config_id"/>
+                <field name="user_id"/>
+                <field name="closing_date"/>
+
+                <separator/>
+
+                <filter name="group_by_shop"
+                        string="Shop"
+                        context="{'group_by': 'pos_config_id'}"/>
+
+                <filter name="group_by_user"
+                        string="User"
+                        context="{'group_by': 'user_id'}"/>
+
+                <filter name="group_by_date"
+                        string="Date"
+                        context="{'group_by': 'closing_date'}"/>
+
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pos_cash_denomination" model="ir.actions.act_window">
+        <field name="name">Cash Denomination</field>
+        <field name="res_model">pos.cash.denomination</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_pos_cash_denomination_tree"/>
+        <field name="search_view_id" ref="view_pos_cash_denomination_search"/>
+    </record>
+
+    <menuitem
+        id="menu_pos_cash_denomination"
+        name="Cash Denomination"
+        parent="point_of_sale.menu_point_rep"
+        action="action_pos_cash_denomination"
+        groups="point_of_sale.group_pos_user"
+        sequence="10"/>
+</odoo>

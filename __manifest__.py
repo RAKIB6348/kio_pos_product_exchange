@@ -27,6 +27,7 @@ Key Features:
         'data/pos_exchange_adjustment_product.xml',
         'views/menu_views.xml',
         'views/pos_config_views.xml',
+        'views/cash_denomination_views.xml',
     ],
     'demo': [],
     'assets': {

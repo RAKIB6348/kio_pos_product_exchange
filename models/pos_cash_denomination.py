@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class PosCashDenomination(models.Model):
@@ -45,11 +46,38 @@ class PosCashDenomination(models.Model):
         ("pos_session_unique", "unique(pos_session_id)", "A cash denomination record already exists for this POS session."),
     ]
 
+    def init(self):
+        # Historical placeholder references may repeat; real references must not.
+        self.env.cr.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS pos_cash_denomination_reference_unique
+            ON pos_cash_denomination (name)
+            WHERE name IS NOT NULL AND name NOT IN ('', 'New')
+        """)
+
+    @api.model
+    def _ensure_reference_sequence(self):
+        sequence_model = self.env["ir.sequence"].sudo()
+        if not sequence_model.search_count([
+            ("code", "=", "pos.cash.denomination"),
+            ("company_id", "=", False),
+        ]):
+            sequence_model.create({
+                "name": "Cash Denomination Reference",
+                "code": "pos.cash.denomination",
+                "prefix": "CD/",
+                "padding": 5,
+                "number_increment": 1,
+                "company_id": False,
+            })
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get("name", "New") == "New":
-                vals["name"] = self.env["ir.sequence"].next_by_code("pos.cash.denomination") or "New"
+            if not vals.get("name") or vals["name"].strip() in ("", "New"):
+                reference = self.env["ir.sequence"].next_by_code("pos.cash.denomination")
+                if not reference:
+                    raise ValidationError(_("The cash denomination reference sequence is not configured."))
+                vals["name"] = reference
         return super().create(vals_list)
 
 

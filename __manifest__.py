@@ -23,6 +23,7 @@ Key Features:
     'data': [
         'security/ir.model.access.csv',
         'security/pos_exchange_record_rules.xml',
+        'security/pos_cash_denomination_rules.xml',
         'data/pos_exchange_sequence.xml',
         'data/pos_cash_denomination_sequence.xml',
         'data/pos_exchange_adjustment_product.xml',

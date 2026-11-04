@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="kio_pos_product_exchange.ProductInformationButton">
+        <button class="control-button btn btn-light rounded-0 fw-bolder" t-on-click="() => this.click()">
+            <i class="fa fa-search me-1" role="img" aria-label="Product Information" title="Product Information"/>
+            Product Information
+        </button>
+    </t>
+
+    <t t-name="kio_pos_product_exchange.CrossBranchProductInformationPopup">
+        <div class="popup product-information-popup">
+            <div class="modal-header">
+                <h4 class="modal-title title"><t t-esc="props.title"/></h4>
+                <button class="btn btn-light btn-lg rounded-3 popup-close" t-on-click="cancel">
+                    <i class="fa fa-close"/>
+                </button>
+            </div>
+            <main class="modal-body product-information-body">
+                <form class="d-flex flex-wrap gap-2 mb-3" t-on-submit.prevent="search">
+                    <input class="form-control product-information-search" type="search" placeholder="Search name, barcode, or SKU"
+                           t-att-value="state.query" t-on-input="onQueryInput" autofocus="autofocus"/>
+                    <button class="btn btn-primary" type="submit" t-att-disabled="state.loading">
+                        <t t-if="state.loading">Searching…</t>
+                        <t t-else="">Search</t>
+                    </button>
+                </form>
+                <div t-if="state.products.length" class="d-flex justify-content-end mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            t-on-click="toggleShowAllWarehouses"
+                            t-att-aria-pressed="state.showAllWarehouses">
+                        <i t-attf-class="fa {{ state.showAllWarehouses ? 'fa-eye-slash' : 'fa-eye' }} me-1"/>
+                        <t t-if="state.showAllWarehouses">Hide Zero-Stock Warehouses</t>
+                        <t t-else="">Show All Warehouses</t>
+                    </button>
+                </div>
+                <div t-if="state.error" class="alert alert-danger" t-esc="state.error"/>
+                <div t-if="state.searched and !state.loading and !state.error and !state.products.length" class="text-muted">
+                    Product not found
+                </div>
+                <div t-foreach="state.products" t-as="product" t-key="product.id" class="border rounded p-3 mb-3 product-information-card">
+                    <div class="fw-bolder fs-5" t-esc="product.name"/>
+                    <div class="row small mt-2 product-information-details">
+                        <div class="col-12 col-md-4"><strong>Barcode:</strong> <t t-esc="product.barcode or '-'"/></div>
+                        <div class="col-12 col-md-4"><strong>Internal Reference:</strong> <t t-esc="product.default_code or '-'"/></div>
+                        <div class="col-12 col-md-4"><strong>Sales Price:</strong> <t t-esc="env.utils.formatCurrency(product.sales_price)"/></div>
+                        <div class="col-12 col-md-4"><strong>Size:</strong> <t t-esc="product.size or '-'"/></div>
+                        <div class="col-12 col-md-4"><strong>Color:</strong> <t t-esc="product.color or '-'"/></div>
+                    </div>
+                    <div class="warehouse-stock-list table-responsive mt-3">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Warehouse / Branch</th><th class="text-end">Available Stock Quantity</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="visibleWarehouses(product)" t-as="stock" t-key="stock.warehouse_id">
+                                    <td t-esc="stock.warehouse_name"/>
+                                    <td class="text-end" t-esc="formatQuantity(stock.available_qty)"/>
+                                </tr>
+                                <tr t-if="!visibleWarehouses(product).length">
+                                    <td colspan="2" class="text-muted small py-2">
+                                        No warehouses with available stock. Use "Show All Warehouses" to see all branches.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div t-if="hiddenWarehouseCount(product)" class="text-muted small mt-2">
+                        <t t-esc="hiddenWarehouseCount(product)"/> zero-stock warehouse(s) hidden.
+                    </div>
+                </div>
+            </main>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-lg" t-on-click="cancel">Close</button>
+            </div>
+        </div>
+    </t>
+</templates>

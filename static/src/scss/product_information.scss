@@ -1,0 +1,66 @@
+// POS "Product Information" popup only. Scoped under .product-information-popup
+// so no other POS styling is affected.
+
+.product-information-popup {
+    width: 95vw;
+    max-width: 900px;
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+
+    .product-information-body {
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    .product-information-search {
+        flex: 1 1 220px;
+        min-width: 0;
+    }
+
+    // Keep product identity details compact and readable on small screens.
+    .product-information-details > div {
+        padding-bottom: 0.125rem;
+    }
+
+    // Warehouse list scrolls independently; capped at ~300px.
+    .warehouse-stock-list {
+        max-height: 300px;
+        overflow-y: auto;
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background: var(--bs-body-bg, #fff);
+            z-index: 1;
+        }
+    }
+
+    @media (max-width: 576px) {
+        width: 100vw;
+        max-width: 100vw;
+        max-height: 80vh;
+        font-size: 0.875rem;
+
+        .modal-header,
+        .modal-footer {
+            padding: 0.5rem 0.75rem;
+
+            .modal-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        .product-information-body {
+            padding: 0.75rem;
+        }
+
+        .product-information-card {
+            padding: 0.75rem !important;
+        }
+
+        .warehouse-stock-list {
+            max-height: 40vh;
+        }
+    }
+}

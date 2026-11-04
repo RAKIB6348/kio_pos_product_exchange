@@ -42,6 +42,8 @@ Key Features:
             'kio_pos_product_exchange/static/src/js/exchange_order.js',
             'kio_pos_product_exchange/static/src/js/exchange_payment.js',
             'kio_pos_product_exchange/static/src/js/closing_cash_denominations.js',
+            'kio_pos_product_exchange/static/src/js/product_information.js',
+            'kio_pos_product_exchange/static/src/scss/product_information.scss',
             'kio_pos_product_exchange/static/src/scss/exchange_screen.scss',
             'kio_pos_product_exchange/static/src/scss/closing_cash_denominations.scss',
             'kio_pos_product_exchange/static/src/scss/pos_exchange_receipt.scss',

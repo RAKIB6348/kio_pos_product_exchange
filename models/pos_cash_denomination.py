@@ -114,6 +114,12 @@ class PosCashDenominationLine(models.Model):
         "res.currency", related="header_id.currency_id", store=True, readonly=True
     )
 
+    @api.constrains("note_qty")
+    def _check_note_qty_is_not_negative(self):
+        for line in self:
+            if line.note_qty < 0:
+                raise ValidationError(_("Note Quantity cannot be negative."))
+
     @api.onchange("denomination", "note_qty")
     def _onchange_compute_amount(self):
         if self.denomination and self.note_qty:

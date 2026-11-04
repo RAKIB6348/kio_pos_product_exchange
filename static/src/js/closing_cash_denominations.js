@@ -47,6 +47,20 @@ patch(ClosePosPopup.prototype, {
         );
     },
 
+    hasValidCashDenomination() {
+        return this.state.cashDenominations.some(
+            (denomination) => Number(denomination.quantity) > 0
+        );
+    },
+
+    async getCashDenominationValidationStatus() {
+        return this.orm.call(
+            "pos.session",
+            "get_cash_denomination_validation_status",
+            [[this.pos.pos_session.id]]
+        );
+    },
+
     updateCashCountedFromDenominations() {
         if (!this.pos.config.show_cash_denominations) {
             return;
@@ -110,6 +124,17 @@ patch(ClosePosPopup.prototype, {
     async closeSession() {
         if (!this.pos.config.show_cash_denominations) {
             return super.closeSession(...arguments);
+        }
+
+        const validation = await this.getCashDenominationValidationStatus();
+        if (validation.required && !this.hasValidCashDenomination()) {
+            await this.popup.add(ErrorPopup, {
+                title: _t("Cash Denomination Required"),
+                body: _t(
+                    "Please enter cash denomination details before closing the POS session."
+                ),
+            });
+            return;
         }
 
         try {

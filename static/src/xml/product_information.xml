@@ -8,6 +8,50 @@
         </button>
     </t>
 
+    <t t-name="kio_pos_product_exchange.WarehouseStockList">
+        <div class="warehouse-stock-section mt-3">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                <span class="fw-bolder">Stock by Branch</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        t-on-click="toggleShowAllWarehouses"
+                        t-att-aria-pressed="state.showAllWarehouses">
+                    <i t-attf-class="fa {{ state.showAllWarehouses ? 'fa-eye-slash' : 'fa-eye' }} me-1"/>
+                    <t t-if="state.showAllWarehouses">Show Positive Stock Only</t>
+                    <t t-else="">Show All Warehouses</t>
+                </button>
+            </div>
+            <div class="warehouse-stock-list table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Warehouse / Branch</th>
+                            <th class="text-end">Available Stock</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="visibleWarehouses" t-as="stock" t-key="stock.warehouse_id">
+                            <td t-esc="stock.warehouse_name"/>
+                            <td class="text-end" t-esc="formatQuantity(stock.available_qty)"/>
+                            <td class="text-center">
+                                <span t-if="stock.available_qty > 0" class="badge rounded-pill text-bg-success">Available</span>
+                                <span t-else="" class="badge rounded-pill text-bg-secondary">Out of Stock</span>
+                            </td>
+                        </tr>
+                        <tr t-if="!visibleWarehouses.length">
+                            <td colspan="3" class="text-muted small py-2">
+                                No warehouses with available stock. Use "Show All Warehouses" to see all branches.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div t-if="hiddenWarehouseCount" class="text-muted small mt-2">
+                <t t-esc="hiddenWarehouseCount"/> zero-stock warehouse(s) hidden.
+            </div>
+        </div>
+    </t>
+
     <t t-name="kio_pos_product_exchange.CrossBranchProductInformationPopup">
         <div class="popup product-information-popup">
             <div class="modal-header">
@@ -25,15 +69,6 @@
                         <t t-else="">Search</t>
                     </button>
                 </form>
-                <div t-if="state.products.length" class="d-flex justify-content-end mb-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                            t-on-click="toggleShowAllWarehouses"
-                            t-att-aria-pressed="state.showAllWarehouses">
-                        <i t-attf-class="fa {{ state.showAllWarehouses ? 'fa-eye-slash' : 'fa-eye' }} me-1"/>
-                        <t t-if="state.showAllWarehouses">Hide Zero-Stock Warehouses</t>
-                        <t t-else="">Show All Warehouses</t>
-                    </button>
-                </div>
                 <div t-if="state.error" class="alert alert-danger" t-esc="state.error"/>
                 <div t-if="state.searched and !state.loading and !state.error and !state.products.length" class="text-muted">
                     Product not found
@@ -47,26 +82,41 @@
                         <div class="col-12 col-md-4"><strong>Size:</strong> <t t-esc="product.size or '-'"/></div>
                         <div class="col-12 col-md-4"><strong>Color:</strong> <t t-esc="product.color or '-'"/></div>
                     </div>
-                    <div class="warehouse-stock-list table-responsive mt-3">
-                        <table class="table table-sm mb-0">
-                            <thead><tr><th>Warehouse / Branch</th><th class="text-end">Available Stock Quantity</th></tr></thead>
-                            <tbody>
-                                <tr t-foreach="visibleWarehouses(product)" t-as="stock" t-key="stock.warehouse_id">
-                                    <td t-esc="stock.warehouse_name"/>
-                                    <td class="text-end" t-esc="formatQuantity(stock.available_qty)"/>
-                                </tr>
-                                <tr t-if="!visibleWarehouses(product).length">
-                                    <td colspan="2" class="text-muted small py-2">
-                                        No warehouses with available stock. Use "Show All Warehouses" to see all branches.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div t-if="hiddenWarehouseCount(product)" class="text-muted small mt-2">
-                        <t t-esc="hiddenWarehouseCount(product)"/> zero-stock warehouse(s) hidden.
-                    </div>
+                    <WarehouseStockList stockByWarehouse="product.stock_by_warehouse"/>
                 </div>
+            </main>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-lg" t-on-click="cancel">Close</button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="kio_pos_product_exchange.CrossBranchProductStockPopup">
+        <div class="popup product-information-popup">
+            <div class="modal-header">
+                <h4 class="modal-title title"><t t-esc="props.title"/></h4>
+                <button class="btn btn-light btn-lg rounded-3 popup-close" t-on-click="cancel">
+                    <i class="fa fa-close"/>
+                </button>
+            </div>
+            <main class="modal-body product-information-body">
+                <div t-if="state.loading" class="text-center py-4">
+                    <i class="fa fa-spinner fa-spin me-2"/> Loading branch stock…
+                </div>
+                <div t-if="state.error" class="alert alert-danger" t-esc="state.error"/>
+                <t t-if="!state.loading and !state.error and state.info">
+                    <div class="border rounded p-3 product-information-card">
+                        <div class="fw-bolder fs-5" t-esc="state.info.name"/>
+                        <div class="row small mt-2 product-information-details">
+                            <div class="col-12 col-md-4"><strong>Barcode:</strong> <t t-esc="state.info.barcode or '-'"/></div>
+                            <div class="col-12 col-md-4"><strong>Internal Reference:</strong> <t t-esc="state.info.default_code or '-'"/></div>
+                            <div class="col-12 col-md-4"><strong>Sales Price:</strong> <t t-esc="env.utils.formatCurrency(state.info.sales_price)"/></div>
+                            <div class="col-12 col-md-4"><strong>Size:</strong> <t t-esc="state.info.size or '-'"/></div>
+                            <div class="col-12 col-md-4"><strong>Color:</strong> <t t-esc="state.info.color or '-'"/></div>
+                        </div>
+                        <WarehouseStockList stockByWarehouse="state.info.stock_by_warehouse"/>
+                    </div>
+                </t>
             </main>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-lg" t-on-click="cancel">Close</button>

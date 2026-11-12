@@ -47,6 +47,8 @@ class PosOrder(models.Model):
     def _ensure_exchange_adjustment_product(self):
         product = self._find_exchange_adjustment_product()
         if product:
+            if product.available_in_pos:
+                product.product_tmpl_id.sudo().write({"available_in_pos": False})
             return product
 
         creation_values = {
@@ -85,12 +87,44 @@ class PosOrder(models.Model):
         session = self.env["pos.session"].browse(session_id).exists()
         if not session:
             raise ValidationError(_("The POS session could not be found."))
+        if session.company_id not in self.env.companies:
+            raise ValidationError(_("The POS session is not available to this user."))
         product = self._get_exchange_adjustment_product()
         if product.company_id and product.company_id != session.company_id:
             raise ValidationError(
                 _("The Exchange Adjustment Fee product is not available to this POS company.")
             )
         return product.id
+
+    @api.model
+    def get_exchange_adjustment_product_data(self, session_id):
+        """Load the hidden adjustment product for exchange use only.
+
+        Some POS extensions deliberately constrain the generic deferred
+        product loader to the normal sellable domain. Read this one known
+        internal product by ID and run Odoo's normal POS product processing,
+        without adding it to the POS selection domain.
+        """
+        session = self.env["pos.session"].browse(session_id).exists()
+        if not session:
+            raise ValidationError(_("The POS session could not be found."))
+        if session.company_id not in self.env.companies:
+            raise ValidationError(_("The POS session is not available to this user."))
+
+        product = self._get_exchange_adjustment_product()
+        if product.company_id and product.company_id != session.company_id:
+            raise ValidationError(
+                _("The Exchange Adjustment Fee product is not available to this POS company.")
+            )
+
+        loader_params = session._loader_params_product_product()
+        product_data = product.with_company(session.company_id).with_context(
+            **loader_params.get("context", {})
+        ).read(loader_params["search_params"]["fields"])
+        if not product_data:
+            return False
+        session._process_pos_ui_product_product(product_data)
+        return product_data[0]
 
     @api.model
     def _order_fields(self, ui_order):

@@ -110,7 +110,18 @@ patch(PosStore.prototype, {
                     "get_exchange_adjustment_product",
                     [this.pos_session.id]
                 );
-                const product = await this.getProductById(productId);
+                let product = await this.getProductById(productId);
+                if (!product) {
+                    const productData = await this.orm.call(
+                        "pos.order",
+                        "get_exchange_adjustment_product_data",
+                        [this.pos_session.id]
+                    );
+                    if (productData?.id === productId) {
+                        this._loadProductProduct([productData]);
+                        product = this.db.get_product_by_id(productId);
+                    }
+                }
                 if (!product) {
                     await this.env.services.popup.add(ErrorPopup, {
                         title: _t("Exchange Adjustment Product Unavailable"),
@@ -263,7 +274,7 @@ patch(PosStore.prototype, {
                 targetOrder.removeOrderline(duplicateLine);
             }
 
-            if (totals.remainingToAdjust <= 0) {
+            if (!totals.replacementLines.length || totals.remainingToAdjust <= 0) {
                 if (adjustmentLine) {
                     targetOrder.removeOrderline(adjustmentLine);
                 }
@@ -399,6 +410,7 @@ patch(PosStore.prototype, {
         const order = this.get_order();
         if (order && (order.is_exchange_order || this.exchangeState?.exchangeOrder === order)) {
             this.updateExchangeState(order);
+            await this.requestExchangeAdjustmentSync(order);
         }
         return result;
     },

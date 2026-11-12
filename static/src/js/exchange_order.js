@@ -6,6 +6,20 @@ import { ConfirmPopup } from "@point_of_sale/app/utils/confirm_popup/confirm_pop
 import { _t } from "@web/core/l10n/translation";
 
 patch(Order.prototype, {
+    add_orderline(line) {
+        const result = super.add_orderline(...arguments);
+        if (
+            !this.syncingExchangeAdjustment &&
+            this.pos?.isLiveExchangeOrder?.(this) &&
+            !this.pos.isExchangeAdjustmentLine(line) &&
+            line.get_quantity() > 0
+        ) {
+            this.pos.updateExchangeState(this);
+            this.pos.requestExchangeAdjustmentSync(this);
+        }
+        return result;
+    },
+
     async pay() {
         if (
             this.exchangeState?.exchangeType === "new_product" &&

@@ -14,6 +14,13 @@ CASH_DENOMINATION_REQUIRED_MESSAGE = _(
 class PosSession(models.Model):
     _inherit = "pos.session"
 
+    def load_pos_data(self):
+        # The module data hook corrects this product during install/upgrade.
+        # Repeat the idempotent correction before every POS bootstrap so an
+        # existing record cannot reappear after a reload or server restart.
+        self.env["pos.order"]._ensure_exchange_adjustment_product()
+        return super().load_pos_data()
+
     def _get_cash_denomination_requirement(self):
         """Return the denomination requirement from the session closing data.
 

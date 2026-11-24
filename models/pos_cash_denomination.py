@@ -97,6 +97,7 @@ class PosCashDenominationLine(models.Model):
             ("10", "10 BDT"),
             ("5", "5 BDT"),
             ("2", "2 BDT"),
+            ("1", "1 BDT"),
         ],
         string="Denomination",
         required=True,
@@ -133,6 +134,7 @@ class PosCashDenominationLine(models.Model):
                 "10": 10,
                 "5": 5,
                 "2": 2,
+                "1": 1,
             }
             rate = rates.get(self.denomination, 0)
             self.amount = rate * self.note_qty

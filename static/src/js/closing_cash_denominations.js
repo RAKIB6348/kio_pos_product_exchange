@@ -6,7 +6,7 @@ import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
 import { serializeDateTime } from "@web/core/l10n/dates";
 
-const CASH_DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 2];
+const CASH_DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
 
 patch(ClosePosPopup.prototype, {
     getInitialState() {

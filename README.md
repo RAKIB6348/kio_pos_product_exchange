@@ -31,6 +31,14 @@ The module does not replace or modify Odoo core files.
 - Exchange-record list, form, search, date filter, status filters, and grouping
   by shop, customer, cashier, or status.
 - Exchange data attached to the validated POS order through `exchange_data`.
+- POS Closing Session Cash Denominations (1000, 500, 200, 100, 50, 20, 10, 5, 2, and 1 BDT).
+- Cash payment amount displayed in the closing session table above City Bank.
+- Simplified branch-specific cash labels to "Cash" in the closing session interface.
+- Real-time cash denomination total validation against the rounded cash payment amount.
+- Rounding rule applied: amounts below 0.50 round down, and 0.50 or above round up.
+- Rejection and restore of previous valid quantity with validation warning on excessive cash entry.
+- Prevention of session closing when cash denomination total exceeds the cash amount.
+- Existing accounting and payment amounts remain completely unchanged.
 
 ## Important limitations
 
@@ -84,6 +92,23 @@ The resulting records are available under:
 
 **Point of Sale → Exchange Records**
 
+## POS Closing Session: Cash Denomination & Verification
+
+The module extends the POS session closing flow (`ClosePosPopup`) with cash denomination tracking and validation:
+
+- **1 BDT Cash Denomination**: Added the 1 BDT denomination note to the cash denomination table immediately following the 2 BDT note, supporting 1000, 500, 200, 100, 50, 20, 10, 5, 2, and 1 BDT.
+- **Cash Payment Amount Display**: A dedicated Cash payment row is positioned directly above City Bank and other payment methods in the payment overview table, displaying the current session's actual cash sales amount (`payment_amount`).
+- **Simplified Cash Label**: Branch-specific cash payment method names (e.g. `JOYDEVPUR Cash`, `BCDL-64 Cash`) are cleanly simplified to **"Cash"** for consistent presentation.
+- **Immediate Input Validation & Reversion**: Whenever a cashier modifies any denomination quantity, the combined total across all denomination inputs is validated in real time against the session's cash payment amount.
+- **Validation Warning**: If an input causes the denomination total to exceed the cash payment amount, the excessive input is rejected, the input field instantly reverts to its previous valid quantity, and an error warning is displayed:
+  > *"Total cash denomination amount cannot exceed the cash amount."*
+- **Allowed Thresholds**: Quantities yielding combined totals equal to or less than the cash payment amount are accepted.
+- **Rounding Rule**: Fractional cash amounts are handled using currency precision:
+  - Fractional values **below 0.50 round down** to the nearest integer.
+  - Fractional values of **0.50 or above round up** to the nearest integer.
+- **Session Closing Enforcement**: The module prevents closing the POS session if the cash denomination total exceeds the cash payment amount, validated both on the frontend and enforced by backend constraints.
+- **Accounting & Payment Integrity**: Existing journal entries, payment method configurations, accounting balances, and financial moves remain completely unaffected and unchanged.
+
 ## Backend models
 
 ### `pos.exchange.record`
@@ -95,6 +120,16 @@ session, POS, cashier, date, totals, difference, status, and exchange lines.
 
 Stores the original product/quantity/price, replacement product/quantity/price,
 and the line difference supplied by the POS frontend.
+
+### `pos.cash.denomination`
+
+Stores the cash denomination reference (`CD/00001`), POS session, POS config,
+closing user, closing date, total notes count, and total counted amount.
+
+### `pos.cash.denomination.line`
+
+Stores individual note denominations (1000, 500, 200, 100, 50, 20, 10, 5, 2, 1 BDT),
+note quantity, and the calculated line amount.
 
 ### `pos.order` extensions
 
@@ -111,22 +146,47 @@ The module adds:
 kio_pos_product_exchange/
 ├── __manifest__.py
 ├── models/
+│   ├── pos_cash_denomination.py
+│   ├── pos_config.py
 │   ├── pos_exchange_record.py
-│   └── pos_order.py
-├── security/ir.model.access.csv
-├── data/pos_exchange_sequence.xml
-├── views/menu_views.xml
+│   ├── pos_order.py
+│   ├── pos_product_information.py
+│   └── pos_session.py
+├── security/
+│   ├── ir.model.access.csv
+│   ├── pos_cash_denomination_rules.xml
+│   └── pos_exchange_record_rules.xml
+├── data/
+│   ├── pos_cash_denomination_sequence.xml
+│   ├── pos_exchange_adjustment_product.xml
+│   └── pos_exchange_sequence.xml
+├── views/
+│   ├── cash_denomination_views.xml
+│   ├── menu_views.xml
+│   └── pos_config_views.xml
 └── static/src/
     ├── js/
+    │   ├── closing_cash_denominations.js
     │   ├── exchange_button.js
     │   ├── exchange_details_popup.js
     │   ├── exchange_flow.js
     │   ├── exchange_order.js
-    │   └── exchange_screen.js
-    ├── scss/exchange_screen.scss
+    │   ├── exchange_payment.js
+    │   ├── exchange_screen.js
+    │   ├── internal_product_visibility.js
+    │   └── product_information.js
+    ├── scss/
+    │   ├── closing_cash_denominations.scss
+    │   ├── exchange_record.scss
+    │   ├── exchange_screen.scss
+    │   ├── pos_exchange_receipt.scss
+    │   └── product_information.scss
     └── xml/
+        ├── closing_cash_denominations.xml
         ├── exchange_button.xml
-        └── exchange_screen.xml
+        ├── exchange_receipt.xml
+        ├── exchange_screen.xml
+        └── product_information.xml
 ```
 
 ## Technical implementation
@@ -138,6 +198,11 @@ kio_pos_product_exchange/
   `exchange_data` with the POS order JSON.
 - `pos.order._process_order()` creates an exchange record after a validated
   exchange order is processed.
+- `ClosePosPopup` is patched to integrate cash denomination inputs, real-time total
+  validation against `props.default_cash_details.payment_amount`, and automatic counted cash synchronization.
+- Real-time input rejection restores the previous valid quantity and presents an
+  error popup if the total exceeds the rounded cash payment amount.
+- `pos.session` and `pos.cash.denomination` enforce validation constraints on session closing.
 - Access is currently granted to the Point of Sale user group for reading and
   creating exchange records; users cannot edit or delete them through access
   rights.

@@ -4,6 +4,15 @@
 <t t-name="kio_pos_product_exchange.ClosePosPopupCashDenominations"
    t-inherit="point_of_sale.ClosePosPopup"
    t-inherit-mode="extension">
+    <xpath expr="//tbody[@t-if='props.other_payment_methods.length > 0']" position="attributes">
+        <attribute name="t-if">props.other_payment_methods.length > 0 or (props.default_cash_details and !pos.config.cash_control)</attribute>
+    </xpath>
+    <xpath expr="//tr[@t-foreach='props.other_payment_methods']" position="before">
+        <tr t-if="props.default_cash_details and !pos.config.cash_control">
+            <td>Cash</td>
+            <td t-esc="env.utils.formatCurrency(props.default_cash_details.payment_amount)"/>
+        </tr>
+    </xpath>
     <xpath expr="//div[hasclass('payment-methods-overview')]" position="after">
         <section t-if="pos.config.show_cash_denominations"
                  class="cash-denomination-details border-top mt-2 pt-2">

@@ -63,6 +63,18 @@ class PosSession(models.Model):
                 and not session._has_valid_cash_denomination()
             ):
                 raise UserError(CASH_DENOMINATION_REQUIRED_MESSAGE)
+            denomination = self.env["pos.cash.denomination"].sudo().search(
+                [("pos_session_id", "=", session.id)], limit=1
+            )
+            if denomination:
+                orders = session._get_closed_orders()
+                cash_pms = session.payment_method_ids.filtered(lambda pm: pm.type == "cash")
+                if cash_pms:
+                    cash_amount = sum(
+                        orders.payment_ids.filtered(lambda p: p.payment_method_id == cash_pms[0]).mapped("amount")
+                    )
+                    if session.currency_id.compare_amounts(denomination.total_amount, cash_amount) > 0:
+                        raise UserError(_("Total cash denomination amount cannot exceed the cash amount."))
 
     def _cannot_close_session(self, bank_payment_method_diffs=None):
         result = super()._cannot_close_session(bank_payment_method_diffs)

@@ -18,14 +18,44 @@ patch(ClosePosPopup.prototype, {
         return state;
     },
 
-    setDenominationQuantity(denomination, event) {
+    getMaxCashAmount() {
+        return this.props.default_cash_details?.payment_amount ?? 0;
+    },
+
+    isDenominationTotalExceeded(total) {
+        const totalAmount = total !== undefined ? total : this.getDenominationTotalAmount();
+        const maxCashAmount = this.getMaxCashAmount();
+        const round = (val) =>
+            typeof this.env.utils?.roundCurrency === "function"
+                ? this.env.utils.roundCurrency(val)
+                : Number(Number(val || 0).toFixed(2));
+        const diff = round(round(totalAmount) - round(maxCashAmount));
+        return diff > 0;
+    },
+
+    async setDenominationQuantity(denomination, event) {
+        const previousQuantity = denomination.quantity;
         const inputValue = event.target.value;
-        if (inputValue === "") {
-            denomination.quantity = "";
-        } else {
-            denomination.quantity = Math.max(0, Math.trunc(Number(inputValue) || 0));
-            event.target.value = denomination.quantity;
+        let newQuantity = "";
+        if (inputValue !== "") {
+            newQuantity = Math.max(0, Math.trunc(Number(inputValue) || 0));
         }
+
+        denomination.quantity = newQuantity;
+
+        if (this.isDenominationTotalExceeded()) {
+            denomination.quantity = previousQuantity;
+            event.target.value = previousQuantity;
+            await this.popup.add(ErrorPopup, {
+                title: _t("Warning"),
+                body: _t(
+                    "Total cash denomination amount cannot exceed the cash amount."
+                ),
+            });
+            return;
+        }
+
+        event.target.value = newQuantity;
         this.updateCashCountedFromDenominations();
     },
 
@@ -85,6 +115,12 @@ patch(ClosePosPopup.prototype, {
             return;
         }
 
+        if (this.isDenominationTotalExceeded()) {
+            throw new Error(
+                _t("Total cash denomination amount cannot exceed the cash amount.")
+            );
+        }
+
         const denominations = this.state.cashDenominations.filter(
             (d) => (d.quantity || 0) > 0
         );
@@ -124,6 +160,16 @@ patch(ClosePosPopup.prototype, {
     async closeSession() {
         if (!this.pos.config.show_cash_denominations) {
             return super.closeSession(...arguments);
+        }
+
+        if (this.isDenominationTotalExceeded()) {
+            await this.popup.add(ErrorPopup, {
+                title: _t("Warning"),
+                body: _t(
+                    "Total cash denomination amount cannot exceed the cash amount."
+                ),
+            });
+            return;
         }
 
         const validation = await this.getCashDenominationValidationStatus();

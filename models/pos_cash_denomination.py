@@ -46,6 +46,21 @@ class PosCashDenomination(models.Model):
         ("pos_session_unique", "unique(pos_session_id)", "A cash denomination record already exists for this POS session."),
     ]
 
+    @api.constrains("total_amount", "pos_session_id")
+    def _check_total_amount_does_not_exceed_cash_amount(self):
+        for record in self:
+            session = record.pos_session_id
+            if not session:
+                continue
+            orders = session._get_closed_orders()
+            cash_pms = session.payment_method_ids.filtered(lambda pm: pm.type == "cash")
+            if cash_pms:
+                cash_amount = sum(
+                    orders.payment_ids.filtered(lambda p: p.payment_method_id == cash_pms[0]).mapped("amount")
+                )
+                if session.currency_id.compare_amounts(record.total_amount, cash_amount) > 0:
+                    raise ValidationError(_("Total cash denomination amount cannot exceed the cash amount."))
+
     def init(self):
         # Historical placeholder references may repeat; real references must not.
         self.env.cr.execute("""
